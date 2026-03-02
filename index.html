@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Windows NT 4.0 / 98 Definitivo</title>
+    <title>Windows NT 4.0 / 98 - Ultimate Emulation</title>
     <style>
         /* --- CORE SYSTEM & FONTS --- */
         @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
@@ -26,7 +26,6 @@
         /* DESKTOP ENVIRONMENT */
         #os-environment { display: none; width: 100%; height: 100dvh; position: relative; overflow: hidden; }
         #desktop-area { position: absolute; top: 0; left: 0; width: 100%; height: calc(100dvh - 30px); z-index: 1; }
-        #selection-box { position: absolute; border: 1px dotted #fff; background: rgba(0, 0, 128, 0.3); display: none; z-index: 1; pointer-events: none; }
         
         .desktop-icon { width: 75px; position: absolute; display: flex; flex-direction: column; align-items: center; text-align: center; z-index: 2; padding: 5px; cursor: pointer;}
         .desktop-icon img { width: 32px; height: 32px; margin-bottom: 4px; pointer-events: none; }
@@ -73,21 +72,11 @@
         /* SPECIFIC APPS */
         .calc-display { background: #fff; border: 2px inset #fff; margin: 8px; padding: 4px 8px; text-align: right; font-family: 'Courier New', monospace; font-size: 18px; font-weight: bold;}
         .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 0 8px 8px 8px; }
-        .mine-grid { display: grid; grid-template-columns: repeat(8, 1fr); border: 3px inset #fff; background: #c0c0c0; margin: 0 auto; user-select: none;}
-        .mine-cell { width: 22px; height: 22px; background: #c0c0c0; border: 2px outset #fff; display: flex; justify-content: center; align-items: center; font-weight: bold; cursor: pointer;}
-        .mine-cell.revealed { border: 1px solid #808080; background: #dfdfdf; }
         .color-box { width: 16px; height: 16px; border: 2px inset #fff; cursor: pointer; }
         .color-box.active-color { border-color: #000; }
-        .game-canvas { background: #000; border: 2px inset #fff; width: 100%; height: 100%; display: block; outline: none;}
-
-        /* NATIVE SOLITAIRE UI */
-        #solitaire-board { background: #008000; flex: 1; padding: 10px; border: 2px inset #fff; position: relative; overflow: hidden; }
-        .card { width: 60px; height: 85px; background: #fff; border: 1px solid #000; border-radius: 4px; position: absolute; display: flex; flex-direction: column; justify-content: center; align-items: center; font-weight: bold; font-size: 18px; cursor: grab; box-shadow: 1px 1px 3px rgba(0,0,0,0.5); user-select: none; touch-action: none;}
-        .card.facedown { background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Card_back_05a.svg/150px-Card_back_05a.svg.png'); background-size: cover; cursor: default; }
-        .card.red { color: red; }
-        .card.black { color: black; }
-
-        #bsod { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: #0000aa; color: #fff; font-family: 'Courier New', monospace; padding: 20px; font-size: 14px; font-weight: bold; z-index: 9999999; display: none; }
+        
+        /* Iframe wrappers para jogos nativos */
+        .game-iframe { border: 2px inset #fff; width: 100%; height: 100%; display: block; background: #000; }
     </style>
 </head>
 <body class="crt" oncontextmenu="return false;">
@@ -108,15 +97,12 @@
     </div>
 
     <div id="os-environment">
-        <div id="selection-box"></div>
         <div id="desktop-area">
             <div class="desktop-icon" id="icon-ie" style="top: 10px; left: 10px;" data-app="ie-app" data-name="Internet Explorer"><img src="https://win98icons.alexmeub.com/icons/png/msie1-2.png"><span>Internet Explorer</span></div>
             <div class="desktop-icon" id="icon-dos" style="top: 85px; left: 10px;" data-app="dos-app" data-name="MS-DOS"><img src="https://win98icons.alexmeub.com/icons/png/console_prompt-0.png"><span>MS-DOS</span></div>
         </div>
 
-        <!-- ============================================== -->
-        <!-- CORE: BROWSER, DOWNLOADS E ERROS               -->
-        <!-- ============================================== -->
+        <!-- BROWSER / SUPERDOWNLOADS -->
         <div class="win-classic app-win" id="ie-app" style="top:5%; left:5%; width: 450px; height: 500px;">
             <div class="title-bar" id="drag-ie"><div><img src="https://win98icons.alexmeub.com/icons/png/msie1-2.png" width="14"> Internet Explorer</div><div class="win-controls"><div class="win-btn" onclick="maximizarJanela('ie-app')">☐</div><div class="win-btn" onclick="fecharJanela('ie-app')">X</div></div></div>
             <div class="menu-bar"><u>A</u>rquivo &nbsp;&nbsp; <u>E</u>ditar &nbsp;&nbsp; <u>E</u>xibir &nbsp;&nbsp; <u>F</u>avoritos</div>
@@ -137,20 +123,50 @@
             </div>
         </div>
 
-        <div class="win-classic app-win" id="dialog-app" style="top:35%; left:15%; width:280px; z-index:900;">
-            <div class="title-bar" id="drag-dialog"><span id="dialog-title">Erro</span><div class="win-controls"><div class="win-btn" onclick="fecharJanela('dialog-app')">X</div></div></div>
-            <div style="padding:15px; display:flex; gap:15px; align-items:center;">
-                <div id="dialog-icon" style="min-width:32px; height:32px; border-radius:50%; display:flex; justify-content:center; align-items:center; font-size:24px; font-weight:bold; border: 2px solid red; color: red; background: #fff;">X</div>
-                <div id="dialog-msg" style="font-size:11px; word-wrap:break-word; flex:1;"></div>
+        <!-- ============================================== -->
+        <!-- JOGOS NATIVOS ORIGINAIS (VIA EMULADOR/IFRAME)  -->
+        <!-- ============================================== -->
+
+        <!-- DOOM MS-DOS EMULATOR -->
+        <div class="win-classic app-win" id="doom-app" style="top:5%; left:10%; width: 660px; height: 500px;">
+            <div class="title-bar" id="drag-doom"><div><img src="https://win98icons.alexmeub.com/icons/png/console_prompt-0.png" width="14"> DOOM (MS-DOS Emulator)</div><div class="win-controls"><div class="win-btn" onclick="maximizarJanela('doom-app')">☐</div><div class="win-btn" onclick="fecharJanela('doom-app')">X</div></div></div>
+            <div class="menu-bar"><span><u>C</u>lique dentro do jogo e aperte ENTER para iniciar. (Setas para mover, Ctrl atira)</span></div>
+            <div style="padding: 2px; flex: 1; background: #000;">
+                <iframe id="frame-doom" data-src="https://dos.zone/player/?id=doom-dec-1993" class="game-iframe" frameborder="0"></iframe>
             </div>
-            <div style="text-align:center; padding-bottom:10px;"><button class="win-action" style="width: 80px;" onclick="fecharJanela('dialog-app')">OK</button></div>
+        </div>
+
+        <!-- 3D PINBALL SPACE CADET REAL -->
+        <div class="win-classic app-win" id="pinball-app" style="top:5%; left:15%; width: 620px; height: 480px;">
+            <div class="title-bar" id="drag-pinball"><div><img src="https://win98icons.alexmeub.com/icons/png/joystick-0.png" width="14"> 3D Pinball para Windows - Space Cadet</div><div class="win-controls"><div class="win-btn" onclick="fecharJanela('pinball-app')">X</div></div></div>
+            <div class="menu-bar"><span><u>J</u>ogo &nbsp;&nbsp; <u>O</u>pções &nbsp;&nbsp; A<u>j</u>uda (Z - Flipper Esq | / - Flipper Dir | Espaço - Lança)</span></div>
+            <div style="padding: 2px; flex: 1; background: #000;">
+                <iframe id="frame-pinball" data-src="https://alula.github.io/SpaceCadetPinball/" class="game-iframe" frameborder="0"></iframe>
+            </div>
+        </div>
+
+        <!-- PACIÊNCIA KLONDIKE REAL -->
+        <div class="win-classic app-win" id="solitaire-app" style="top:10%; left:20%; width: 620px; height: 460px;">
+            <div class="title-bar" id="drag-solitaire"><div><img src="https://win98icons.alexmeub.com/icons/png/solitaire-1.png" width="14"> Paciência</div><div class="win-controls"><div class="win-btn" onclick="maximizarJanela('solitaire-app')">☐</div><div class="win-btn" onclick="fecharJanela('solitaire-app')">X</div></div></div>
+            <div class="menu-bar"><span><u>J</u>ogo &nbsp;&nbsp; A<u>j</u>uda</span></div>
+            <div style="padding: 2px; flex: 1; background: #008000;">
+                <!-- Usando a porta clássica lrusso -->
+                <iframe id="frame-solitaire" data-src="https://lrusso.github.io/Klondike/Klondike.htm" class="game-iframe" style="background: transparent;" frameborder="0"></iframe>
+            </div>
+        </div>
+
+        <!-- CAMPO MINADO REAL -->
+        <div class="win-classic app-win" id="mine-app" style="top:15%; left:25%; width: 280px; height: 350px;">
+            <div class="title-bar" id="drag-mine"><div><img src="https://win98icons.alexmeub.com/icons/png/minesweeper-0.png" width="14"> Campo Minado</div><div class="win-controls"><div class="win-btn" onclick="fecharJanela('mine-app')">X</div></div></div>
+            <div class="menu-bar"><span><u>J</u>ogo &nbsp;&nbsp; A<u>j</u>uda</span></div>
+            <div style="padding: 2px; flex: 1; background: #c0c0c0;">
+                <iframe id="frame-mine" data-src="https://lrusso.github.io/Minesweeper/Minesweeper.htm" class="game-iframe" style="background: #c0c0c0;" frameborder="0" scrolling="no"></iframe>
+            </div>
         </div>
 
         <!-- ============================================== -->
-        <!-- APPS NATIVOS & JOGOS OFFLINE                   -->
+        <!-- APLICATIVOS NATIVOS                            -->
         <!-- ============================================== -->
-
-        <!-- CALCULADORA -->
         <div class="win-classic app-win" id="calc-app" style="top:15%; left:25%; width: 220px;">
             <div class="title-bar" id="drag-calc"><div><img src="https://win98icons.alexmeub.com/icons/png/calculator-0.png" width="14"> Calculadora</div><div class="win-controls"><div class="win-btn" onclick="fecharJanela('calc-app')">X</div></div></div>
             <div class="menu-bar"><u>E</u>ditar &nbsp;&nbsp; <u>E</u>xibir &nbsp;&nbsp; A<u>j</u>uda</div>
@@ -164,170 +180,31 @@
             </div>
         </div>
 
-        <!-- BLOCO DE NOTAS -->
         <div class="win-classic app-win" id="notepad-app" style="top:10%; left:10%; width: 340px; height: 280px;">
             <div class="title-bar" id="drag-notepad"><div><img src="https://win98icons.alexmeub.com/icons/png/notepad-5.png" width="14"> Sem Título - Bloco de Notas</div><div class="win-controls"><div class="win-btn" onclick="maximizarJanela('notepad-app')">☐</div><div class="win-btn" onclick="fecharJanela('notepad-app')">X</div></div></div>
-            <div class="menu-bar"><span style="cursor:pointer;" onclick="saveFile('note-text', 'Anotacao.txt')"><u>A</u>rquivo (Salvar)</span> &nbsp;&nbsp; <u>E</u>ditar &nbsp;&nbsp; A<u>j</u>uda</div>
+            <div class="menu-bar"><span style="cursor:pointer;" onclick="saveFile('note-text', 'Anotacao.txt')"><u>A</u>rquivo (Salvar)</span> &nbsp;&nbsp; <u>E</u>ditar</div>
             <textarea id="note-text" style="flex:1; border:none; border-top: 1px solid #fff; padding:4px; font-family:'Courier New', monospace; resize:none;" placeholder="Digite seu texto..."></textarea>
         </div>
 
-        <!-- PAINT -->
         <div class="win-classic app-win" id="paint-app" style="top:5%; left:15%; width: 380px; height: 400px;">
             <div class="title-bar" id="drag-paint"><div><img src="https://win98icons.alexmeub.com/icons/png/paint_file-2.png" width="14"> sem título - Paint</div><div class="win-controls"><div class="win-btn" onclick="maximizarJanela('paint-app')">☐</div><div class="win-btn" onclick="fecharJanela('paint-app')">X</div></div></div>
-            <div class="menu-bar"><span style="cursor:pointer;" onclick="savePaint()"><u>A</u>rquivo (Salvar)</span> &nbsp;&nbsp; <u>E</u>ditar &nbsp;&nbsp; E<u>x</u>ibir</div>
+            <div class="menu-bar"><span style="cursor:pointer;" onclick="clearCanvas()"><u>A</u>rquivo (Novo)</span></div>
             <div style="display:flex; gap:4px; padding:4px; background:#c0c0c0; border-bottom:1px solid #808080; align-items:center;">
                 <div class="color-box active-color" style="background:#000" onclick="changeColor(this, '#000')"></div>
-                <div class="color-box" style="background:#808080" onclick="changeColor(this, '#808080')"></div>
                 <div class="color-box" style="background:#f00" onclick="changeColor(this, '#f00')"></div>
                 <div class="color-box" style="background:#0f0" onclick="changeColor(this, '#0f0')"></div>
                 <div class="color-box" style="background:#00f" onclick="changeColor(this, '#00f')"></div>
-                <div class="color-box" style="background:#fff; border-color:#808080; font-size:10px; text-align:center;" onclick="changeColor(this, '#fff', true)">🩹</div>
-                <button class="win-action" style="padding:2px 4px; margin-left:auto;" onclick="clearCanvas()">Novo</button>
             </div>
             <div style="flex:1; background:#808080; padding:4px; display:flex;">
                 <canvas id="paint-canvas" style="background:#fff; width:100%; height:100%; cursor: crosshair; border: 2px inset #fff; touch-action:none;"></canvas>
             </div>
         </div>
 
-        <!-- WORDPAD -->
-        <div class="win-classic app-win" id="wordpad-app" style="top:15%; left:15%; width: 420px; height: 350px;">
-            <div class="title-bar" id="drag-wordpad"><div><img src="https://win98icons.alexmeub.com/icons/png/write_wordpad-1.png" width="14"> Documento - Wordpad</div><div class="win-controls"><div class="win-btn" onclick="maximizarJanela('wordpad-app')">☐</div><div class="win-btn" onclick="fecharJanela('wordpad-app')">X</div></div></div>
-            <div class="menu-bar">
-                <span style="cursor:pointer;" onclick="saveFile('wordpad-editor', 'Documento.rtf', true)"><u>A</u>rquivo (Salvar)</span>
-                <button class="win-action" style="padding: 0 5px; font-weight: bold; margin-left: 10px;" onclick="document.execCommand('bold')">B</button>
-                <button class="win-action" style="padding: 0 5px; font-style: italic;" onclick="document.execCommand('italic')">I</button>
-                <button class="win-action" style="padding: 0 5px; text-decoration: underline;" onclick="document.execCommand('underline')">U</button>
-            </div>
-            <div id="wordpad-editor" contenteditable="true" style="flex:1; background:#fff; border:2px inset #808080; margin:4px; padding:10px; font-family:'Times New Roman', serif; font-size:14px; overflow-y:auto; outline:none;">Texto rico suportado. Tente os botões em negrito!</div>
-        </div>
-
-        <!-- CD PLAYER -->
-        <div class="win-classic app-win" id="cd-app" style="top:30%; left:30%; width: 260px;">
-            <div class="title-bar" id="drag-cd"><div><img src="https://win98icons.alexmeub.com/icons/png/cd_audio_cd_a-4.png" width="14"> CD Player</div><div class="win-controls"><div class="win-btn" onclick="fecharJanela('cd-app')">X</div></div></div>
-            <div style="background:#000; color:#0f0; border:2px inset #808080; margin:8px; padding:8px; text-align:center; font-family:monospace;">
-                <div>[01] <span id="cd-time" style="font-size:20px;">00:00</span></div>
-            </div>
-            <div style="display:flex; justify-content:center; gap:8px; padding-bottom:8px;">
-                <button class="win-action" onclick="controlCD('play')">▶ Play</button>
-                <button class="win-action" onclick="controlCD('stop')">⏹ Stop</button>
-            </div>
-        </div>
-
-        <!-- RELÓGIO -->
-        <div class="win-classic app-win" id="clock-app" style="top:15%; left:45%; width: 220px;">
-            <div class="title-bar" id="drag-clock"><div><img src="https://win98icons.alexmeub.com/icons/png/time_and_date-1.png" width="14"> Relógio</div><div class="win-controls"><div class="win-btn" onclick="fecharJanela('clock-app')">X</div></div></div>
-            <div style="padding: 20px; text-align: center; background: #fff; border: 2px inset #fff; margin: 5px;">
-                <div id="big-clock" style="font-family: 'Times New Roman', serif; font-size: 32px; font-weight: bold; color: #000080;">12:00:00</div>
-                <div id="big-date" style="font-size: 14px; margin-top: 5px;">01/01/1998</div>
-            </div>
-        </div>
-
-        <!-- GRAVADOR DE SOM -->
-        <div class="win-classic app-win" id="sound-app" style="top:30%; left:20%; width: 280px;">
-            <div class="title-bar" id="drag-sound"><div><img src="https://win98icons.alexmeub.com/icons/png/microphone-0.png" width="14"> Gravador de Som</div><div class="win-controls"><div class="win-btn" onclick="fecharJanela('sound-app')">X</div></div></div>
-            <div style="padding: 10px; text-align: center;">
-                <div style="background:#000; height:40px; border:2px inset #fff; display:flex; align-items:center; justify-content:center; color:#0f0; font-family:monospace;" id="sound-status">Pronto.</div>
-                <div style="margin-top:10px; display:flex; justify-content:center; gap:5px;">
-                    <button class="win-action" onclick="audioRec.start()" style="color:red; font-weight:bold;">● REC</button>
-                    <button class="win-action" onclick="audioRec.stop()">⏹ STOP</button>
-                    <button class="win-action" onclick="audioRec.play()">▶ PLAY</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- MAPA DE CARACTERES -->
-        <div class="win-classic app-win" id="charmap-app" style="top:20%; left:20%; width: 340px;">
-            <div class="title-bar" id="drag-charmap"><div><img src="https://win98icons.alexmeub.com/icons/png/character_map-0.png" width="14"> Mapa de Caracteres</div><div class="win-controls"><div class="win-btn" onclick="fecharJanela('charmap-app')">X</div></div></div>
-            <div style="padding: 5px;">
-                <div style="display: grid; grid-template-columns: repeat(12, 1fr); border: 2px inset #fff; background: #fff; height: 120px; overflow-y: scroll;" id="char-grid"></div>
-                <div style="margin-top:5px; display:flex; gap:5px; align-items:center;">Copiar: <input type="text" id="char-input" style="flex:1;"></div>
-            </div>
-        </div>
-
-        <!-- GERENCIADOR DE PROGRAMAS -->
         <div class="win-classic app-win" id="progman-app" style="top:10%; left:10%; width: 380px; height: 320px;">
             <div class="title-bar" id="drag-progman"><div><img src="https://win98icons.alexmeub.com/icons/png/computer_explorer-5.png" width="14"> Gerenciador de Programas</div><div class="win-controls"><div class="win-btn" onclick="fecharJanela('progman-app')">X</div></div></div>
-            <div style="background:#fff; flex:1; border:2px inset #fff; padding:10px; overflow-y:auto;">
-                <div class="win-classic" style="display:block; position:relative; width:100%; box-shadow:none; padding-bottom:10px;">
-                    <div class="title-bar">Principal</div>
-                    <div class="pm-group" onclick="abrirJanela('ie-app','Internet Explorer')"><img src="https://win98icons.alexmeub.com/icons/png/msie1-2.png"><br>Internet</div>
-                    <div class="pm-group" onclick="abrirJanela('dos-app','MS-DOS')"><img src="https://win98icons.alexmeub.com/icons/png/console_prompt-0.png"><br>MS-DOS</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- WINVER -->
-        <div class="win-classic app-win" id="winver-app" style="top:25%; left:20%; width: 320px;">
-            <div class="title-bar" id="drag-winver"><div><img src="https://win98icons.alexmeub.com/icons/png/windows-0.png" width="14"> Sobre o Windows</div><div class="win-controls"><div class="win-btn" onclick="fecharJanela('winver-app')">X</div></div></div>
-            <div style="padding: 15px; display: flex; gap: 15px;">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Windows_NT_4.0_Workstation_logo.svg/500px-Windows_NT_4.0_Workstation_logo.svg.png" width="80" style="object-fit: contain;">
-                <div><b>Microsoft Windows NT</b><br>Versão 4.0 (Build 1381)<br>Copyright © 1981-1998<br>Microsoft Corp.<br><br>Memória Física: 65.536 KB</div>
-            </div>
-            <div style="text-align:center; padding-bottom:10px;"><button class="win-action" onclick="fecharJanela('winver-app')">OK</button></div>
-        </div>
-
-        <!-- MEDIA PLAYER (VISUALIZER FAKE NATIVO) -->
-        <div class="win-classic app-win" id="media-app" style="top:25%; left:25%; width: 340px;">
-            <div class="title-bar" id="drag-media"><div><img src="https://win98icons.alexmeub.com/icons/png/video_file-0.png" width="14"> Media Player</div><div class="win-controls"><div class="win-btn" onclick="fecharJanela('media-app')">X</div></div></div>
-            <div class="menu-bar"><u>A</u>rquivo &nbsp;&nbsp; <u>D</u>ispositivo</div>
-            <div style="padding: 10px; background: #000; border: 2px inset #fff; height: 150px; display: flex; justify-content: center; align-items: center; overflow: hidden; position: relative;">
-                <div id="dvd-logo" style="color: yellow; font-family: Impact; font-size: 30px; font-weight: bold; position: absolute; font-style: italic;">VIDEO</div>
-            </div>
-            <div style="padding: 5px; text-align: center;"><button class="win-action" onclick="startDVD()">▶ Play</button></div>
-        </div>
-
-        <!-- MS-DOS -->
-        <div class="win-classic app-win" id="dos-app" style="top:20%; left:20%; width: 350px; height: 250px;">
-            <div class="title-bar" id="drag-dos"><div><img src="https://win98icons.alexmeub.com/icons/png/console_prompt-0.png" width="14"> Prompt de Comando</div><div class="win-controls"><div class="win-btn" onclick="fecharJanela('dos-app')">X</div></div></div>
-            <div id="dos-screen" style="background: #000; color: #c0c0c0; font-family: 'VT323', monospace; font-size: 16px; flex: 1; padding: 4px; overflow-y: auto;">
-                Microsoft(R) Windows NT(TM)<br>(C) Copyright 1985-1998 Microsoft Corp.<br>Type 'help' for commands.<br><br>
-                <div id="dos-history"></div>
-                <div style="display:flex;">C:\&gt;<input type="text" id="dos-input" style="background:transparent; border:none; color:#c0c0c0; font-family:'VT323', monospace; outline:none; flex:1; padding:0; font-size: 16px;" onkeydown="handleDOS(event)" autocomplete="off"></div>
-            </div>
-        </div>
-
-        <!-- ============================================== -->
-        <!-- JOGOS NATIVOS CODIFICADOS DO ZERO EM JS        -->
-        <!-- ============================================== -->
-
-        <!-- CAMPO MINADO -->
-        <div class="win-classic app-win" id="mine-app" style="top:15%; left:35%; width: 230px;">
-            <div class="title-bar" id="drag-mine"><div><img src="https://win98icons.alexmeub.com/icons/png/minesweeper-0.png" width="14"> Campo Minado</div><div class="win-controls"><div class="win-btn" onclick="fecharJanela('mine-app')">X</div></div></div>
-            <div class="menu-bar"><span style="cursor:pointer;" onclick="initMinesweeper()"><u>J</u>ogo (Novo)</span></div>
-            <div style="background:#c0c0c0; border:2px inset #fff; padding:6px; margin:4px;">
-                <div style="display:flex; justify-content:space-between; background:#c0c0c0; border:2px inset #fff; padding:4px; margin-bottom:6px;">
-                    <span style="background:#000; color:red; font-family:monospace; font-size:20px; padding:0 4px;" id="mine-bombs">010</span>
-                    <div style="width:24px; height:24px; border:2px outset #fff; display:flex; justify-content:center; align-items:center; cursor:pointer; font-size: 14px;" onclick="initMinesweeper()" id="mine-face">🙂</div>
-                    <span style="background:#000; color:red; font-family:monospace; font-size:20px; padding:0 4px;">000</span>
-                </div>
-                <div class="mine-grid" id="mine-grid"></div>
-            </div>
-        </div>
-
-        <!-- PACIÊNCIA (MESA INTERATIVA DE CARTAS NATIVA) -->
-        <div class="win-classic app-win" id="solitaire-app" style="top:5%; left:10%; width: 600px; height: 480px;">
-            <div class="title-bar" id="drag-solitaire"><div><img src="https://win98icons.alexmeub.com/icons/png/solitaire-1.png" width="14"> Paciência</div><div class="win-controls"><div class="win-btn" onclick="fecharJanela('solitaire-app')">X</div></div></div>
-            <div class="menu-bar"><span style="cursor:pointer;" onclick="initSolitaire()"><u>J</u>ogo (Dar Cartas)</span></div>
-            <div id="solitaire-board">
-                <!-- Javascript renderiza as cartas reais arrastáveis aqui -->
-            </div>
-        </div>
-
-        <!-- SPACE CADET TRAINING (MINI-PINBALL / BREAKOUT NATIVO) -->
-        <div class="win-classic app-win" id="pinball-app" style="top:5%; left:15%; width: 420px; height: 500px;">
-            <div class="title-bar" id="drag-pinball"><div><img src="https://win98icons.alexmeub.com/icons/png/joystick-0.png" width="14"> Space Cadet Bumper Training</div><div class="win-controls"><div class="win-btn" onclick="fecharJanela('pinball-app')">X</div></div></div>
-            <div class="menu-bar"><span style="cursor:pointer;" onclick="startPinball()"><u>N</u>ovo Jogo</span></div>
-            <div style="padding: 4px; flex: 1; background: #808080;">
-                <canvas id="pinball-canvas" class="game-canvas" width="400" height="430" tabindex="0"></canvas>
-            </div>
-        </div>
-
-        <!-- SNAKE NT (SUBSTITUI FREECELL PARA GARANTIR OFFLINE) -->
-        <div class="win-classic app-win" id="freecell-app" style="top:10%; left:20%; width: 420px; height: 460px;">
-            <div class="title-bar" id="drag-freecell"><div><img src="https://win98icons.alexmeub.com/icons/png/freecell-1.png" width="14"> Cobrinha NT (Freecell Sub)</div><div class="win-controls"><div class="win-btn" onclick="fecharJanela('freecell-app')">X</div></div></div>
-            <div class="menu-bar"><span style="cursor:pointer;" onclick="startSnake()"><u>N</u>ovo Jogo (Setas p/ Mover)</span></div>
-            <div style="padding: 4px; flex: 1; background: #808080;">
-                <canvas id="snake-canvas" class="game-canvas" width="400" height="400" tabindex="0"></canvas>
+            <div style="background:#fff; flex:1; border:2px inset #fff; padding:10px; overflow-y:auto; display: flex; flex-wrap: wrap; gap: 20px;">
+                <div style="text-align: center; cursor:pointer;" onclick="abrirJanela('ie-app','Internet Explorer')"><img src="https://win98icons.alexmeub.com/icons/png/msie1-2.png"><br>Internet</div>
+                <div style="text-align: center; cursor:pointer;" onclick="abrirJanela('dos-app','MS-DOS')"><img src="https://win98icons.alexmeub.com/icons/png/console_prompt-0.png"><br>MS-DOS</div>
             </div>
         </div>
 
@@ -349,7 +226,6 @@
 
     <script>
         const sleep = ms => new Promise(r => setTimeout(r, ms));
-        
         function playSnd(id) { let s = document.getElementById(id); if(s){ s.currentTime=0; let p = s.play(); if(p) p.catch(()=>{}); } }
         function playClick() { playSnd('snd-click'); }
 
@@ -361,16 +237,12 @@
             await sleep(3500);
             document.getElementById('win-boot-screen').style.display='none';
             document.getElementById('os-environment').style.display='block';
-            bindIcons(); initCharMap();
+            bindIcons();
+            setInterval(() => {
+                let d = new Date();
+                document.getElementById('clock').innerText = d.getHours().toString().padStart(2, '0') + ":" + d.getMinutes().toString().padStart(2, '0');
+            }, 1000);
         }
-
-        // --- SISTEMA DE DEPENDÊNCIAS DE DLL ---
-        let systemDLLs = { 'msvcrt.dll': false, 'mfc42.dll': false };
-        const appDependencies = {
-            'cd-app': 'msvcrt.dll', 'freecell-app': 'msvcrt.dll', 'media-app': 'msvcrt.dll',
-            'notepad-app': 'msvcrt.dll', 'solitaire-app': 'msvcrt.dll', 'mine-app': 'msvcrt.dll',
-            'paint-app': 'mfc42.dll', 'wordpad-app': 'mfc42.dll'
-        };
 
         // --- WINDOW MANAGER ---
         let zIndex = 100, apps = {};
@@ -386,11 +258,6 @@
         document.querySelectorAll('.app-win').forEach(w => w.addEventListener('pointerdown', ()=>focarJanela(w.id)));
 
         function abrirJanela(id, nome) {
-            let reqDll = appDependencies[id];
-            if (reqDll && !systemDLLs[reqDll]) {
-                return showError(`${nome}.exe - Erro`, `O arquivo ${reqDll.toUpperCase()} não foi encontrado.\nBaixe a biblioteca no SuperDownloads.`, 'error');
-            }
-
             let w = document.getElementById(id); 
             if(w) {
                 if(!apps[id]) {
@@ -400,12 +267,13 @@
                     btn.onclick = ()=>alternarJanela(id);
                     document.getElementById('taskbar-apps').appendChild(btn);
                     
-                    // Inits
                     if(id==='paint-app') setTimeout(initPaint, 50);
-                    if(id==='mine-app' && !mineInit) { initMinesweeper(); mineInit = true; }
-                    if(id==='solitaire-app') setTimeout(initSolitaire, 50);
-                    if(id==='pinball-app') setTimeout(startPinball, 50);
-                    if(id==='freecell-app') setTimeout(startSnake, 50);
+                    
+                    // Inicialização Tardia de Iframes para poupar memória no Boot
+                    let iframe = document.getElementById('frame-' + id.split('-')[0]);
+                    if(iframe && !iframe.src) {
+                        iframe.src = iframe.getAttribute('data-src');
+                    }
                 }
                 w.style.display='flex';
                 focarJanela(id);
@@ -415,13 +283,13 @@
         function fecharJanela(id) { playClick(); document.getElementById(id).style.display='none'; if(apps[id]){ delete apps[id]; let t=document.getElementById('task-'+id); if(t)t.remove(); } }
         function alternarJanela(id) { playClick(); let w=document.getElementById(id); if(w.style.display==='none'){w.style.display='flex'; focarJanela(id);}else{ if(w.style.zIndex == zIndex) {w.style.display='none'; let t=document.getElementById('task-'+id); if(t)t.classList.remove('active');} else { focarJanela(id); } } }
         function maximizarJanela(id) { playClick(); let w=document.getElementById(id); w.classList.toggle('maximized'); if(id==='paint-app') setTimeout(resizeCanvas, 50); focarJanela(id); }
-        function showError(t, m, type='error') { 
-            playSnd('snd-chord'); abrirJanela('dialog-app','Aviso'); document.getElementById('dialog-title').innerText=t; document.getElementById('dialog-msg').innerText=m; 
-            let icn = document.getElementById('dialog-icon');
-            if(type === 'info') { icn.innerText = 'i'; icn.style.color = 'blue'; icn.style.borderColor = 'blue'; } else { icn.innerText = 'X'; icn.style.color = 'red'; icn.style.borderColor = 'red'; }
-        }
+        
+        // Menu
+        function toggleMenu(e) { e.stopPropagation(); let m = document.getElementById('start-menu'); m.style.display = m.style.display === 'flex' ? 'none' : 'flex'; document.getElementById('start-btn').classList.toggle('active'); }
+        function closeMenu() { document.getElementById('start-menu').style.display = 'none'; document.getElementById('start-btn').classList.remove('active'); }
+        document.addEventListener('pointerdown', e => { if(!e.target.closest('#start-menu') && !e.target.closest('#start-btn')) closeMenu(); });
 
-        // --- ARRASTAR JANELAS (DRAG & DROP FIXO) ---
+        // --- ARRASTAR JANELAS COM SUPORTE A IFRAME ---
         document.querySelectorAll('.app-win').forEach(w => {
             let dragZone = w.querySelector('.title-bar');
             if(!dragZone) return;
@@ -433,6 +301,10 @@
                 startX = e.clientX; startY = e.clientY;
                 initX = w.offsetLeft; initY = w.offsetTop;
                 dragZone.setPointerCapture(e.pointerId);
+                
+                // MÁGICA: Desativa eventos de mouse nos iframes durante o arrasto
+                // para que o iframe não roube o controle do mouse!
+                document.querySelectorAll('iframe').forEach(ifr => ifr.style.pointerEvents = 'none');
             });
             
             dragZone.addEventListener('pointermove', e => {
@@ -443,6 +315,8 @@
             
             dragZone.addEventListener('pointerup', e => {
                 isDragging = false; dragZone.releasePointerCapture(e.pointerId);
+                // Reativa eventos nos iframes
+                document.querySelectorAll('iframe').forEach(ifr => ifr.style.pointerEvents = 'auto');
             });
         });
 
@@ -453,29 +327,20 @@
             playSnd('snd-dialup'); await sleep(3500); document.getElementById('snd-dialup').pause();
             
             document.getElementById('ie-content').innerHTML = `
-                <div style="background:#000080; color:#fff; padding:10px; font-size:18px; font-weight:bold; border:2px outset #fff; display:flex; justify-content:space-between;"><span>SuperDownloads 1998 💾</span><img src="https://gifcities.org/assets/construction.gif" height="25"></div>
+                <div style="background:#000080; color:#fff; padding:10px; font-size:18px; font-weight:bold; border:2px outset #fff; display:flex; justify-content:space-between;"><span>SuperDownloads 1998 💾</span></div>
                 <div style="background:#c0c0c0; border:2px inset #fff; padding:5px; text-align:left; margin-top:5px; height: 350px; overflow-y:auto;">
-                    <p style="color:red; font-weight:bold; margin: 2px 0;">DLLS DO SISTEMA (BAIXE PARA CORRIGIR ERROS):</p>
-                    <table class="dl-table" style="margin-bottom:15px; border-color: red;">
-                        ${gerarLinhaDownload('MSVCRT.DLL (C++ Runtime)', 'https://win98icons.alexmeub.com/icons/png/gears-0.png', 'msvcrt')}
-                        ${gerarLinhaDownload('MFC42.DLL (MFC Core)', 'https://win98icons.alexmeub.com/icons/png/gears-0.png', 'mfc42')}
-                    </table>
-                    <p style="font-weight:bold; margin: 2px 0;">SOFTWARES E JOGOS:</p>
+                    <p style="font-weight:bold; margin: 2px 0;">JOGOS COMPLETOS (VIA EMULADOR WEB):</p>
                     <table class="dl-table">
-                        ${gerarLinhaDownload('Pinball Space Cadet', 'https://win98icons.alexmeub.com/icons/png/joystick-0.png', 'pinball-app')}
-                        ${gerarLinhaDownload('Cobrinha NT (Snake)', 'https://win98icons.alexmeub.com/icons/png/freecell-1.png', 'freecell-app')}
+                        ${gerarLinhaDownload('DOOM (MS-DOS Original)', 'https://win98icons.alexmeub.com/icons/png/console_prompt-0.png', 'doom-app')}
+                        ${gerarLinhaDownload('3D Pinball Space Cadet', 'https://win98icons.alexmeub.com/icons/png/joystick-0.png', 'pinball-app')}
+                        ${gerarLinhaDownload('Paciência (Klondike)', 'https://win98icons.alexmeub.com/icons/png/solitaire-1.png', 'solitaire-app')}
+                        ${gerarLinhaDownload('Campo Minado Clássico', 'https://win98icons.alexmeub.com/icons/png/minesweeper-0.png', 'mine-app')}
+                    </table>
+                    <p style="font-weight:bold; margin: 15px 0 2px 0;">SOFTWARES E UTILITÁRIOS:</p>
+                    <table class="dl-table">
                         ${gerarLinhaDownload('Calculadora Clássica', 'https://win98icons.alexmeub.com/icons/png/calculator-0.png', 'calc-app')}
-                        ${gerarLinhaDownload('CD Player', 'https://win98icons.alexmeub.com/icons/png/cd_audio_cd_a-4.png', 'cd-app')}
-                        ${gerarLinhaDownload('Paciência (Solitaire)', 'https://win98icons.alexmeub.com/icons/png/solitaire-1.png', 'solitaire-app')}
-                        ${gerarLinhaDownload('Campo Minado', 'https://win98icons.alexmeub.com/icons/png/minesweeper-0.png', 'mine-app')}
                         ${gerarLinhaDownload('MS Paint', 'https://win98icons.alexmeub.com/icons/png/paint_file-2.png', 'paint-app')}
                         ${gerarLinhaDownload('Bloco de Notas', 'https://win98icons.alexmeub.com/icons/png/notepad-5.png', 'notepad-app')}
-                        ${gerarLinhaDownload('Wordpad', 'https://win98icons.alexmeub.com/icons/png/write_wordpad-1.png', 'wordpad-app')}
-                        ${gerarLinhaDownload('Mapa de Caracteres', 'https://win98icons.alexmeub.com/icons/png/character_map-0.png', 'charmap-app')}
-                        ${gerarLinhaDownload('Gravador de Som', 'https://win98icons.alexmeub.com/icons/png/microphone-0.png', 'sound-app')}
-                        ${gerarLinhaDownload('Media Player', 'https://win98icons.alexmeub.com/icons/png/video_file-0.png', 'media-app')}
-                        ${gerarLinhaDownload('Relógio de Sistema', 'https://win98icons.alexmeub.com/icons/png/time_and_date-1.png', 'clock-app')}
-                        ${gerarLinhaDownload('Winver', 'https://win98icons.alexmeub.com/icons/png/windows-0.png', 'winver-app')}
                     </table>
                 </div>
             `;
@@ -486,24 +351,20 @@
         let isDownloading = false;
         async function iniciarDownload(nome, icone, appId) {
             playClick();
-            if(isDownloading) return showError('Aviso', 'Aguarde o download terminar.');
-            let isDll = (appId === 'msvcrt' || appId === 'mfc42');
-            if(!isDll && document.getElementById('dl-' + appId)) return showError('Aviso', 'Programa já instalado.', 'info');
-            if(isDll && systemDLLs[appId + '.dll']) return showError('Aviso', 'DLL já instalada.', 'info');
+            if(isDownloading) return;
+            if(document.getElementById('dl-' + appId)) return;
 
-            isDownloading = true; document.getElementById('dl-name').innerText = isDll ? appId.toUpperCase() + ".DLL" : nome + ".exe"; abrirJanela('dl-app', 'Transferência');
+            isDownloading = true; document.getElementById('dl-name').innerText = nome + ".exe"; abrirJanela('dl-app', 'Transferência');
             let progContainer = document.getElementById('dl-progress-container'); let status = document.getElementById('dl-status');
             progContainer.innerHTML = ''; for(let i=0; i<20; i++) { let blk = document.createElement('div'); blk.className = 'progress-block'; progContainer.appendChild(blk); }
             let blocks = progContainer.querySelectorAll('.progress-block'), currentBlock = 0;
 
             for(let i=1; i<=100; i+= 5) {
                 if(currentBlock < 20) { blocks[currentBlock].style.display = 'block'; currentBlock++; }
-                status.innerText = `Copiando... ${i}%`; await sleep(50 + Math.random() * 80);
+                status.innerText = `Copiando... ${i}%`; await sleep(40 + Math.random() * 60);
             }
             
             fecharJanela('dl-app'); playSnd('snd-tada'); isDownloading = false;
-            
-            if(isDll) { systemDLLs[appId + '.dll'] = true; return showError('Sucesso', `${appId.toUpperCase()}.DLL registrada!`, 'info'); }
             
             let div = document.createElement('div'); div.className = 'desktop-icon'; div.id = 'dl-' + appId;
             div.setAttribute('data-app', appId); div.setAttribute('data-name', nome); div.innerHTML = `<img src="${icone}"><span>${nome}</span>`;
@@ -541,19 +402,13 @@
         }
 
         // ==========================================
-        // APPS NATIVOS LOGIC
+        // APPS NATIVOS BÁSICOS LOGIC
         // ==========================================
-        
-        // Calc
         let calcVal = "0", operator = null, prevVal = null;
         function calcInput(v) { playClick(); if(['+','-','*','/'].includes(v)) { if(operator && prevVal !== null) calcEval(); operator = v; prevVal = parseFloat(calcVal); calcVal = "0"; } else { if(calcVal === "0" && v !== ".") calcVal = v; else if (v === "." && calcVal.includes(".")) return; else calcVal += v; } document.getElementById('calc-display').innerText = calcVal; }
         function calcClear() { playClick(); calcVal = "0"; operator = null; prevVal = null; document.getElementById('calc-display').innerText = "0"; }
-        function calcEval() { playClick(); if(!operator || prevVal === null) return; let current = parseFloat(calcVal), res = 0; switch(operator) { case '+': res = prevVal + current; break; case '-': res = prevVal - current; break; case '*': res = prevVal * current; break; case '/': if(current === 0) return showError('Erro', 'Divisão por zero.'); res = prevVal / current; break; } calcVal = (Math.round(res * 1000000) / 1000000).toString(); operator = null; prevVal = null; document.getElementById('calc-display').innerText = calcVal; }
+        function calcEval() { playClick(); if(!operator || prevVal === null) return; let current = parseFloat(calcVal), res = 0; switch(operator) { case '+': res = prevVal + current; break; case '-': res = prevVal - current; break; case '*': res = prevVal * current; break; case '/': res = prevVal / current; break; } calcVal = (Math.round(res * 1000000) / 1000000).toString(); operator = null; prevVal = null; document.getElementById('calc-display').innerText = calcVal; }
 
-        // Notepad/Wordpad
-        function saveFile(elementId, filename, isHTML = false) { playClick(); let el = document.getElementById(elementId); let content = isHTML ? el.innerHTML : el.value; let blob = new Blob([content], {type: isHTML ? "text/rtf" : "text/plain"}); let a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click(); }
-
-        // Paint Fix (Exact coordinates relative to canvas)
         let canvas, ctx, drawing = false, paintInit = false;
         function initPaint() {
             if(paintInit) return; paintInit = true; canvas = document.getElementById('paint-canvas'); ctx = canvas.getContext('2d'); setTimeout(resizeCanvas, 50); 
@@ -562,170 +417,9 @@
             canvas.addEventListener('pointermove', e => { if(!drawing)return; let p=getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); });
             canvas.addEventListener('pointerup', e => { drawing=false; ctx.closePath(); canvas.releasePointerCapture(e.pointerId); });
         }
-        function resizeCanvas() { let tmp=document.createElement('canvas'), tCtx=tmp.getContext('2d'); tmp.width=canvas.width; tmp.height=canvas.height; tCtx.drawImage(canvas,0,0); canvas.width=canvas.offsetWidth; canvas.height=canvas.offsetHeight; ctx.fillStyle='#fff'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.lineCap='round'; ctx.strokeStyle=canvas.dataset.color||'#000'; ctx.lineWidth = canvas.dataset.isEraser === 'true' ? 15 : 3; ctx.drawImage(tmp,0,0); }
-        function changeColor(el, c, isEraser = false) { playClick(); ctx.strokeStyle = c; ctx.lineWidth = isEraser ? 15 : 3; canvas.dataset.color = c; canvas.dataset.isEraser = isEraser; document.querySelectorAll('.color-box').forEach(b=>b.classList.remove('active-color')); el.classList.add('active-color'); }
+        function resizeCanvas() { canvas.width=canvas.offsetWidth; canvas.height=canvas.offsetHeight; ctx.fillStyle='#fff'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.lineCap='round'; ctx.strokeStyle='#000'; ctx.lineWidth = 3;}
+        function changeColor(el, c) { playClick(); ctx.strokeStyle = c; document.querySelectorAll('.color-box').forEach(b=>b.classList.remove('active-color')); el.classList.add('active-color'); }
         function clearCanvas() { playClick(); ctx.fillStyle='#fff'; ctx.fillRect(0,0,canvas.width,canvas.height); }
-
-        // DOS
-        function handleDOS(e) {
-            if(e.key === 'Enter') {
-                let input = document.getElementById('dos-input'); let cmd = input.value.trim().toLowerCase();
-                let hist = document.getElementById('dos-history'); hist.innerHTML += `C:\\>${cmd}<br>`; input.value = "";
-                let res = cmd==="help" ? "Commands: DIR, CLS, CRASH, EXIT<br>" : cmd==="dir" ? "Volume in drive C is WINNT<br>2 File(s)<br>" : cmd==="cls" ? "" : cmd==="exit" ? fecharJanela('dos-app') : cmd==="crash" ? location.reload() : "Bad command or file name.<br>";
-                if(cmd==="cls") hist.innerHTML = ""; else if(cmd!=="exit") hist.innerHTML += res;
-                document.getElementById('dos-screen').scrollTop = 9999;
-            }
-        }
-
-        // DVD Logo
-        let dvdX = 0, dvdY = 0, dvdVX = 2, dvdVY = 2, dvdInt = null;
-        function startDVD() {
-            playClick();
-            if(dvdInt) return;
-            let logo = document.getElementById('dvd-logo');
-            let box = logo.parentElement;
-            dvdInt = setInterval(() => {
-                dvdX += dvdVX; dvdY += dvdVY;
-                if(dvdX + logo.offsetWidth >= box.clientWidth || dvdX <= 0) { dvdVX *= -1; logo.style.color = ['red','blue','green','yellow','magenta'][Math.floor(Math.random()*5)]; }
-                if(dvdY + logo.offsetHeight >= box.clientHeight || dvdY <= 0) { dvdVY *= -1; logo.style.color = ['red','blue','green','yellow','magenta'][Math.floor(Math.random()*5)]; }
-                logo.style.left = dvdX + 'px'; logo.style.top = dvdY + 'px';
-            }, 30);
-        }
-
-        // ==========================================
-        // JOGOS NATIVOS 100% REESCRITOS
-        // ==========================================
-
-        // 1. CAMPO MINADO
-        let mineGrid = [], cols = 9, rows = 9, bombs = 10, mineGameOver = false, mineInit = false;
-        function initMinesweeper() { let grid = document.getElementById('mine-grid'); grid.innerHTML = ''; mineGrid = []; mineGameOver = false; document.getElementById('mine-face').innerText = '🙂'; document.getElementById('mine-bombs').innerText = bombs.toString().padStart(3, '0'); for(let r=0; r<rows; r++) { let row = []; for(let c=0; c<cols; c++) { let cell = document.createElement('div'); cell.className = 'mine-cell'; let cellObj = { el: cell, bomb: false, rev: false, flag: false }; row.push(cellObj); let tTimer; cell.onpointerdown = () => { if(mineGameOver) return; tTimer = setTimeout(() => { if(!cellObj.rev) { playClick(); cellObj.flag = !cellObj.flag; cell.innerText = cellObj.flag ? '🚩' : ''; } tTimer = null; }, 400); }; cell.onpointerup = () => { if(tTimer) { clearTimeout(tTimer); if(!cellObj.flag) clickMine(r, c); } }; grid.appendChild(cell); } mineGrid.push(row); } let b = 0; while(b < bombs) { let r = Math.floor(Math.random() * rows); let c = Math.floor(Math.random() * cols); if(!mineGrid[r][c].bomb) { mineGrid[r][c].bomb = true; b++; } } }
-        function clickMine(r, c) { if(mineGameOver || r<0 || r>=rows || c<0 || c>=cols) return; let cell = mineGrid[r][c]; if(cell.rev || cell.flag) return; playClick(); cell.rev = true; cell.el.classList.add('revealed'); if(cell.bomb) { cell.el.innerText = '💣'; cell.el.style.background = 'red'; document.getElementById('mine-face').innerText = '😵'; mineGameOver = true; playSnd('snd-chord'); for(let i=0; i<rows; i++) for(let j=0; j<cols; j++) if(mineGrid[i][j].bomb) { mineGrid[i][j].el.innerText = '💣'; mineGrid[i][j].el.classList.add('revealed'); } } else { let count = 0; for(let i=-1; i<=1; i++) for(let j=-1; j<=1; j++) if(r+i>=0 && r+i<rows && c+j>=0 && c+j<cols && mineGrid[r+i][c+j].bomb) count++; if(count > 0) { cell.el.innerText = count; cell.el.style.color = ['blue','green','red','darkblue','darkred','teal','black','gray'][count-1]; } else { for(let i=-1; i<=1; i++) for(let j=-1; j<=1; j++) if(i!==0 || j!==0) clickMine(r+i, c+j); } let unrev = 0; for(let i=0; i<rows; i++) for(let j=0; j<cols; j++) if(!mineGrid[i][j].rev) unrev++; if(unrev === bombs) { mineGameOver = true; document.getElementById('mine-face').innerText = '😎'; playSnd('snd-tada');} } }
-
-        // 2. PACIÊNCIA (Solitaire Interativo Mínimo)
-        function initSolitaire() {
-            playClick();
-            let board = document.getElementById('solitaire-board'); board.innerHTML = '';
-            let suits = ['♥','♦','♣','♠']; let vals = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
-            let deck = []; suits.forEach(s => vals.forEach(v => deck.push({s, v, c: (s==='♥'||s==='♦')?'red':'black'})));
-            deck.sort(() => Math.random() - 0.5); 
-            
-            // Renderiza 7 colunas clássicas
-            for(let i=0; i<7; i++) {
-                for(let j=0; j<=i; j++) {
-                    let card = deck.pop();
-                    let el = document.createElement('div');
-                    el.className = 'card ' + (j===i ? 'face-up ' + card.c : 'facedown');
-                    el.style.left = (10 + i * 75) + 'px';
-                    el.style.top = (20 + j * 25) + 'px';
-                    if(j===i) el.innerHTML = `${card.v}<br>${card.s}`;
-                    
-                    // Lógica Básica de Arrastar (Sandbox visual)
-                    let isDragging = false, startX, startY, initX, initY;
-                    el.onpointerdown = e => {
-                        if(el.classList.contains('facedown')) { el.classList.remove('facedown'); el.classList.add('face-up', card.c); el.innerHTML = `${card.v}<br>${card.s}`; return; }
-                        isDragging = true; startX = e.clientX; startY = e.clientY; initX = el.offsetLeft; initY = el.offsetTop;
-                        el.style.zIndex = 1000; el.setPointerCapture(e.pointerId); playClick();
-                    };
-                    el.onpointermove = e => { if(!isDragging) return; el.style.left = (initX + e.clientX - startX) + 'px'; el.style.top = (initY + e.clientY - startY) + 'px'; };
-                    el.onpointerup = e => { isDragging = false; el.style.zIndex = 1; el.releasePointerCapture(e.pointerId); };
-                    board.appendChild(el);
-                }
-            }
-        }
-
-        // 3. SPACE CADET BUMPER TRAINING (Mini-Pinball NATIVO Breakout Style)
-        let pbInt;
-        function startPinball() {
-            playClick();
-            let canvas = document.getElementById('pinball-canvas');
-            let ctx = canvas.getContext('2d');
-            canvas.focus();
-            let paddle = { x: 150, y: 400, w: 80, h: 10 };
-            let ball = { x: 200, y: 200, r: 8, dx: 4, dy: -4 };
-            let bumpers = [];
-            for(let i=0; i<5; i++) bumpers.push({x: Math.random()*300+50, y: Math.random()*200+50, r: 20});
-            
-            canvas.onmousemove = e => { paddle.x = e.offsetX - paddle.w/2; };
-            
-            clearInterval(pbInt);
-            pbInt = setInterval(() => {
-                ctx.fillStyle = '#000'; ctx.fillRect(0,0,400,430);
-                
-                // Desenha Bumpers
-                ctx.fillStyle = 'yellow';
-                bumpers.forEach(b => { ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2); ctx.fill(); });
-                
-                // Desenha Paddle e Bola
-                ctx.fillStyle = 'blue'; ctx.fillRect(paddle.x, paddle.y, paddle.w, paddle.h);
-                ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2); ctx.fill();
-                
-                ball.x += ball.dx; ball.y += ball.dy;
-                
-                // Colisões Parede
-                if(ball.x < 0 || ball.x > 400) ball.dx *= -1;
-                if(ball.y < 0) ball.dy *= -1;
-                
-                // Colisão Paddle
-                if(ball.y+ball.r > paddle.y && ball.x > paddle.x && ball.x < paddle.x+paddle.w) { ball.dy *= -1; ball.y = paddle.y-ball.r; playSnd('snd-click'); }
-                
-                // Colisão Bumpers
-                bumpers.forEach(b => {
-                    let dist = Math.hypot(ball.x - b.x, ball.y - b.y);
-                    if(dist < ball.r + b.r) { ball.dx *= -1; ball.dy *= -1; playSnd('snd-chord'); }
-                });
-                
-                if(ball.y > 430) { clearInterval(pbInt); ctx.fillStyle='red'; ctx.font='30px VT323'; ctx.fillText("GAME OVER", 140, 200); }
-            }, 30);
-        }
-
-        // 4. SNAKE NT (Substituto Native Offline do Freecell)
-        let snkInt;
-        function startSnake() {
-            playClick();
-            let canvas = document.getElementById('snake-canvas');
-            let ctx = canvas.getContext('2d');
-            canvas.focus();
-            let snake = [{x: 10, y: 10}], dir = {x:1, y:0}, food = {x: 5, y: 5};
-            
-            canvas.onkeydown = e => {
-                if(e.key === 'ArrowUp' && dir.y===0) dir = {x:0, y:-1};
-                if(e.key === 'ArrowDown' && dir.y===0) dir = {x:0, y:1};
-                if(e.key === 'ArrowLeft' && dir.x===0) dir = {x:-1, y:0};
-                if(e.key === 'ArrowRight' && dir.x===0) dir = {x:1, y:0};
-            };
-            
-            clearInterval(snkInt);
-            snkInt = setInterval(() => {
-                ctx.fillStyle = '#808080'; ctx.fillRect(0,0,400,400);
-                
-                let head = {x: snake[0].x + dir.x, y: snake[0].y + dir.y};
-                snake.unshift(head);
-                
-                if(head.x === food.x && head.y === food.y) {
-                    food = {x: Math.floor(Math.random()*20), y: Math.floor(Math.random()*20)}; playSnd('snd-click');
-                } else { snake.pop(); }
-                
-                if(head.x<0 || head.x>=20 || head.y<0 || head.y>=20 || snake.slice(1).some(s=>s.x===head.x && s.y===head.y)) {
-                    clearInterval(snkInt); ctx.fillStyle='red'; ctx.font='30px VT323'; ctx.fillText("CRASH!", 150, 200); playSnd('snd-chord'); return;
-                }
-                
-                ctx.fillStyle = 'red'; ctx.fillRect(food.x*20, food.y*20, 18, 18);
-                ctx.fillStyle = 'green'; snake.forEach(s => ctx.fillRect(s.x*20, s.y*20, 18, 18));
-            }, 100);
-        }
-
-        // Toggles Dropdown menus fix
-        document.addEventListener('pointerdown', e => {
-            if(!e.target.closest('.menu-item')) {
-                document.querySelectorAll('.dropdown').forEach(d => d.style.display = 'none');
-            }
-        });
-        document.querySelectorAll('.menu-item').forEach(m => {
-            m.addEventListener('pointerdown', e => {
-                let drop = m.querySelector('.dropdown');
-                if(drop) { drop.style.display = drop.style.display === 'block' ? 'none' : 'block'; }
-            });
-        });
 
     </script>
 </body>
