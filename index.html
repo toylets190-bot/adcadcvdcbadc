@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Windows NT 4.0 Server Edition</title>
+    <title>Windows NT 4.0 Server Ultimate</title>
     <style>
         /* --- CORE SYSTEM & FONTS --- */
         @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
@@ -16,15 +16,21 @@
 
         /* CRT EFFECT */
         body.crt { filter: contrast(1.1) brightness(0.9); }
-        .crt::before { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.1) 50%); background-size: 100% 3px; z-index: 999999; pointer-events: none; }
+        .crt::before { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.15) 50%); background-size: 100% 3px; z-index: 999999; pointer-events: none; }
 
-        /* BOOT SCREEN */
+        /* BOOT & LOGIN SCREENS */
         .fullscreen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000000; background: #000; color: #c0c0c0; font-family: 'VT323', monospace; font-size: 18px;}
         #bios-screen { justify-content: flex-start; align-items: flex-start; padding: 20px; }
+        #login-screen { background: #008080; display: none; }
+        
+        .nt-login-box { background: #c0c0c0; border: 2px outset #fff; width: 420px; padding: 2px; display: flex; flex-direction: column; box-shadow: 4px 4px 10px rgba(0,0,0,0.5);}
+        .nt-login-header { background: linear-gradient(to right, #000080, #1084d0); color: white; padding: 3px 5px; font-weight: bold; font-size: 12px; }
+        .nt-login-content { padding: 15px; display: flex; gap: 15px; align-items: center; }
 
-        /* DESKTOP */
+        /* DESKTOP & CONTEXT MENU */
         #os-environment { display: none; width: 100%; height: 100dvh; position: relative; overflow: hidden; }
         #desktop-area { position: absolute; top: 0; left: 0; width: 100%; height: calc(100dvh - 30px); z-index: 1; display: flex; flex-direction: column; flex-wrap: wrap; align-content: flex-start; padding: 5px; gap: 10px;}
+        #selection-box { position: absolute; border: 1px dotted #fff; background: rgba(0, 0, 128, 0.3); display: none; z-index: 1; pointer-events: none; }
         
         .desktop-icon { width: 75px; display: flex; flex-direction: column; align-items: center; text-align: center; z-index: 2; padding: 5px; cursor: pointer;}
         .desktop-icon img { width: 32px; height: 32px; margin-bottom: 4px; pointer-events: none; }
@@ -32,7 +38,12 @@
         .desktop-icon.selected img { filter: brightness(0.5) sepia(1) hue-rotate(200deg) saturate(5); }
         .desktop-icon.selected span { background: #000080; border: 1px dotted #fff; text-shadow: none; }
 
-        /* TASKBAR */
+        #context-menu { display: none; position: absolute; background: #c0c0c0; border: 2px outset #fff; box-shadow: 2px 2px 5px rgba(0,0,0,0.5); z-index: 999995; flex-direction: column; min-width: 150px; padding: 2px; }
+        .context-item { padding: 5px 15px; cursor: pointer; font-size: 11px; }
+        .context-item:hover { background: #000080; color: #fff; }
+        .context-divider { height: 1px; border-top: 1px solid #808080; border-bottom: 1px solid #fff; margin: 2px 0; }
+
+        /* TASKBAR & START MENU */
         .taskbar { position: absolute; bottom: 0; width: 100%; height: 30px; background: #c0c0c0; border-top: 1px solid #dfdfdf; box-shadow: inset 0 1px 0 #fff; display: flex; justify-content: space-between; align-items: center; padding: 2px; z-index: 99999; }
         .start-btn { font-weight: bold; display: flex; align-items: center; gap: 4px; padding: 0 6px; border: 2px outset #fff; background: #c0c0c0; height: 100%; cursor: pointer;}
         .start-btn:active, .start-btn.active { border: 2px inset #fff; padding: 1px 5px -1px 7px; background: #dfdfdf;}
@@ -41,11 +52,10 @@
         .taskbar-item.active { border: 2px inset #fff; background: #dfdfdf; padding-top: 2px;}
         .sys-tray { border: 2px inset #fff; padding: 0 6px; display: flex; align-items: center; gap: 4px; height: 100%; }
 
-        /* START MENU */
         #start-menu { display: none; position: absolute; bottom: 30px; left: 0; width: 250px; background: #c0c0c0; border: 2px outset #fff; box-shadow: 2px 2px 5px rgba(0,0,0,0.5); z-index: 99991; flex-direction: row; }
         .start-sidebar { background: linear-gradient(to bottom, #000080, #1084d0); width: 35px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 5px; }
         .start-sidebar span { color: white; font-weight: bold; transform: rotate(-90deg); white-space: nowrap; font-size: 18px; margin-bottom: 40px;}
-        .start-item { padding: 10px; display: flex; align-items: center; gap: 10px; font-size: 12px; cursor: pointer; }
+        .start-item { padding: 8px 10px; display: flex; align-items: center; gap: 10px; font-size: 12px; cursor: pointer; }
         .start-item:hover, .start-item:active { background: #000080; color: white; }
 
         /* WINDOWS UI */
@@ -55,38 +65,35 @@
         .win-controls { display: flex; gap: 2px; }
         .win-btn { width: 16px; height: 14px; background: #c0c0c0; color: #000; border: 2px outset #fff; font-size: 10px; font-weight: bold; display: flex; justify-content: center; align-items: center; cursor: pointer; font-family: monospace;}
         .win-btn:active { border: 2px inset #fff; padding-top: 1px; padding-left: 1px;}
-        
         button.win-action { background: #c0c0c0; color: #000; border: 2px outset #fff; font-size: 11px; padding: 4px 12px; cursor: pointer; font-family: 'Tahoma';}
         button.win-action:active { border: 2px inset #fff; padding: 5px 11px 3px 13px;}
-        input[type="text"], textarea { padding: 3px; border: 2px inset #fff; font-size: 11px; outline: none; font-family: 'Courier New', monospace;}
-        .menu-bar { background: #c0c0c0; padding: 2px 6px; display: flex; gap: 10px; border-bottom: 1px solid #808080; font-size: 11px; }
+        input[type="text"], input[type="password"] { padding: 3px; border: 2px inset #fff; font-size: 11px; outline: none; font-family: 'Tahoma';}
+        textarea { padding: 4px; border: 2px inset #fff; font-size: 12px; outline: none; font-family: 'Courier New', monospace; resize: none; touch-action: auto;}
+        .menu-bar { background: #c0c0c0; padding: 2px 6px; display: flex; gap: 15px; border-bottom: 1px solid #808080; font-size: 11px; }
+        .menu-btn { cursor: pointer; padding: 2px 4px; }
+        .menu-btn:hover { background: #000080; color: #fff; }
 
         /* APP SPECIFIC STYLES */
-        
-        /* Defrag */
-        .defrag-grid { display: grid; grid-template-columns: repeat(20, 1fr); gap: 1px; background: #fff; border: 2px inset #808080; padding: 2px; height: 150px; overflow: hidden; margin-top: 10px;}
-        .d-block { background: #fff; border: 1px solid #dfdfdf;}
-        
-        /* File Explorer */
         .explorer-layout { display: flex; flex: 1; border: 2px inset #fff; background: #fff; margin: 2px; overflow: hidden;}
         .explorer-tree { width: 150px; border-right: 2px inset #fff; padding: 5px; overflow-y: auto; background: #fff;}
         .explorer-files { flex: 1; padding: 5px; overflow-y: auto; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 10px; background: #fff;}
-        
-        /* System Monitor */
+        .tree-item { cursor: pointer; padding: 2px; margin-bottom: 2px; }
+        .tree-item.active { background: #000080; color: #fff; font-weight: bold; }
+
         .sysmon-graph { border: 2px inset #fff; background: #000; width: 100%; height: 100px; margin-bottom: 10px;}
-        
-        /* CLI / Terminal */
         .cli-screen { background: #000; color: #c0c0c0; font-family: 'VT323', monospace; font-size: 16px; flex: 1; padding: 5px; overflow-y: auto; border: 2px inset #fff; margin: 2px; cursor: text;}
         .cli-input { background: transparent; border: none; color: inherit; font-family: inherit; outline: none; flex: 1; font-size: inherit; }
-
-        /* FTP */
-        .ftp-pane { flex: 1; border: 2px inset #fff; background: #fff; padding: 2px; overflow-y: auto; height: 120px;}
         
-        /* Email */
-        .email-list { border: 2px inset #fff; background: #fff; height: 100px; overflow-y: auto; margin-bottom: 5px;}
-        .email-item { padding: 2px 5px; cursor: pointer; border-bottom: 1px solid #dfdfdf;}
+        .ftp-pane { flex: 1; border: 2px inset #fff; background: #fff; padding: 5px; overflow-y: auto; height: 130px; font-family: monospace; font-size: 12px;}
+        .email-list { border: 2px inset #fff; background: #fff; height: 80px; overflow-y: auto; margin-bottom: 5px;}
+        .email-item { padding: 3px 5px; cursor: pointer; border-bottom: 1px solid #dfdfdf;}
         .email-item:hover, .email-item.active { background: #000080; color: #fff;}
+        
+        .defrag-grid { display: grid; grid-template-columns: repeat(25, 1fr); gap: 1px; background: #fff; border: 2px inset #808080; padding: 2px; height: 150px; margin-top: 10px;}
+        .d-block { background: #dfdfdf; border: 1px solid #c0c0c0;}
 
+        /* BSOD */
+        #bsod { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: #0000aa; color: #fff; font-family: 'Courier New', monospace; padding: 20px; font-size: 14px; font-weight: bold; z-index: 9999999; display: none; }
     </style>
 </head>
 <body class="crt" oncontextmenu="return false;">
@@ -96,7 +103,7 @@
     <audio id="snd-click" src="https://www.myinstants.com/media/sounds/mouse-click.mp3"></audio>
     <audio id="snd-error" src="https://www.myinstants.com/media/sounds/windows-98-error.mp3"></audio>
 
-    <!-- BIOS BOOT -->
+    <!-- BOOT SYSTEM -->
     <div id="bios-screen" class="fullscreen" onclick="startSystem()">
         <div style="width: 100%; max-width: 600px;">
             <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Energy_Star_logo.svg/1024px-Energy_Star_logo.svg.png" style="width: 80px; filter: grayscale(1); float: right;">
@@ -110,15 +117,41 @@
                 SCSI ID:4 TOSHIBA CD-ROM - Drive D:<br><br>
                 Starting Windows NT Server...
             </div>
-            <div id="boot-prompt" style="margin-top: 50px; color: yellow; cursor: pointer; text-decoration: underline;">> Clique aqui para ligar o servidor <</div>
+            <div id="boot-prompt" style="margin-top: 50px; color: yellow; cursor: pointer; text-decoration: underline; text-align: center;">> CLIQUE AQUI PARA LIGAR O SERVIDOR <</div>
         </div>
+    </div>
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen" class="fullscreen">
+        <div class="nt-login-box">
+            <div class="nt-login-header">Logon Information</div>
+            <div class="nt-login-content">
+                <img src="https://win98icons.alexmeub.com/icons/png/key-0.png" width="48">
+                <div style="flex: 1;">
+                    <p style="margin: 0 0 10px 0;">Enter a user name and password that is valid for this system.</p>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">User name: <input type="text" value="Administrator" style="width: 160px;" readonly></div>
+                    <div style="display:flex; justify-content:space-between;">Password: <input type="password" id="login-pass" style="width: 160px;" onkeydown="if(event.key==='Enter') fazerLogon()"></div>
+                </div>
+            </div>
+            <div style="text-align: right; padding: 10px; border-top: 1px solid #808080;"><button class="win-action" style="width:80px;" onclick="fazerLogon()">OK</button></div>
+        </div>
+    </div>
+
+    <!-- DESKTOP CONTEXT MENU -->
+    <div id="context-menu">
+        <div class="context-item" onclick="document.getElementById('context-menu').style.display='none'; playClick()"><u>A</u>ctive Desktop</div>
+        <div class="context-divider"></div>
+        <div class="context-item" onclick="document.getElementById('context-menu').style.display='none'; playClick()"><u>R</u>efresh</div>
+        <div class="context-divider"></div>
+        <div class="context-item" onclick="document.getElementById('context-menu').style.display='none'; openApp('dos-app')">MS-DOS Prompt</div>
+        <div class="context-item" onclick="document.getElementById('context-menu').style.display='none'; openApp('notepad-app')">New Text Document</div>
+        <div class="context-divider"></div>
+        <div class="context-item" onclick="document.getElementById('context-menu').style.display='none'; playClick()">P<u>r</u>operties</div>
     </div>
 
     <!-- OS ENVIRONMENT -->
     <div id="os-environment">
-        
         <div id="desktop-area">
-            <!-- Icons -->
             <div class="desktop-icon" ondblclick="openApp('monitor-app')" onclick="selectIcon(this)"><img src="https://win98icons.alexmeub.com/icons/png/performance-0.png"><span>System Monitor</span></div>
             <div class="desktop-icon" ondblclick="openApp('iis-app')" onclick="selectIcon(this)"><img src="https://win98icons.alexmeub.com/icons/png/server_window-0.png"><span>IIS Server Admin</span></div>
             <div class="desktop-icon" ondblclick="openApp('explorer-app')" onclick="selectIcon(this)"><img src="https://win98icons.alexmeub.com/icons/png/directory_explorer-5.png"><span>File Explorer</span></div>
@@ -127,114 +160,147 @@
             <div class="desktop-icon" ondblclick="openApp('telnet-app')" onclick="selectIcon(this)"><img src="https://win98icons.alexmeub.com/icons/png/console_prompt-0.png"><span>PuTTY Telnet</span></div>
             <div class="desktop-icon" ondblclick="openApp('browser-app')" onclick="selectIcon(this)"><img src="https://win98icons.alexmeub.com/icons/png/msie1-2.png"><span>Netscape 4.0</span></div>
             <div class="desktop-icon" ondblclick="openApp('email-app')" onclick="selectIcon(this)"><img src="https://win98icons.alexmeub.com/icons/png/envelope_closed-0.png"><span>Outlook Express</span></div>
-            <div class="desktop-icon" ondblclick="openApp('defrag-app')" onclick="selectIcon(this)"><img src="https://win98icons.alexmeub.com/icons/png/defragment-0.png"><span>Disk Defragmenter</span></div>
+            <div class="desktop-icon" ondblclick="openApp('defrag-app')" onclick="selectIcon(this)"><img src="https://win98icons.alexmeub.com/icons/png/defragment-0.png"><span>Disk Defrag</span></div>
             <div class="desktop-icon" ondblclick="openApp('mysql-app')" onclick="selectIcon(this)"><img src="https://win98icons.alexmeub.com/icons/png/msdos-0.png"><span>MySQL CLI</span></div>
         </div>
 
-        <!-- APP 1: SYSTEM MONITOR -->
-        <div class="win-classic app-win" id="monitor-app" style="top:5%; left:5%; width: 350px;">
+        <!-- APP: SYSTEM MONITOR -->
+        <div class="win-classic app-win" id="monitor-app" style="top:5%; left:5%; width: 380px;">
             <div class="title-bar" id="drag-monitor">
                 <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/performance-0.png" width="14"> System Monitor</div>
                 <div class="win-controls"><div class="win-btn" onclick="closeApp('monitor-app')">X</div></div>
             </div>
-            <div class="menu-bar"><u>F</u>ile &nbsp;&nbsp; <u>V</u>iew &nbsp;&nbsp; <u>O</u>ptions</div>
+            <div class="menu-bar"><span class="menu-btn"><u>F</u>ile</span> <span class="menu-btn"><u>V</u>iew</span> <span class="menu-btn"><u>O</u>ptions</span></div>
             <div style="padding: 10px; background: #c0c0c0;">
-                <div><b>Processor Usage (%) - Dual Pentium II</b></div>
+                <div style="margin-bottom: 2px;"><b>Processor Usage (%) - CPU 0</b></div>
                 <canvas id="cpu-graph" class="sysmon-graph"></canvas>
-                <div style="display: flex; justify-content: space-between;">
-                    <span>CPU: <span id="cpu-val">0</span>%</span>
+                <div style="display: flex; justify-content: space-between; font-weight: bold;">
+                    <span>CPU: <span id="cpu-val" style="color:green;">0</span>%</span>
                     <span>Allocated Memory: <span id="ram-val">42</span>M / 128M</span>
                 </div>
             </div>
         </div>
 
-        <!-- APP 2: IIS SERVER ADMIN -->
-        <div class="win-classic app-win" id="iis-app" style="top:10%; left:10%; width: 450px;">
+        <!-- APP: IIS SERVER ADMIN -->
+        <div class="win-classic app-win" id="iis-app" style="top:10%; left:10%; width: 480px;">
             <div class="title-bar" id="drag-iis">
                 <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/server_window-0.png" width="14"> Internet Information Services (IIS) 4.0</div>
                 <div class="win-controls"><div class="win-btn" onclick="closeApp('iis-app')">X</div></div>
             </div>
+            <div class="menu-bar"><span class="menu-btn"><u>A</u>ction</span> <span class="menu-btn"><u>V</u>iew</span> <span class="menu-btn"><u>H</u>elp</span></div>
             <div style="padding: 10px;">
-                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <div style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center; background: #fff; padding: 5px; border: 2px inset #fff;">
+                    <img src="https://win98icons.alexmeub.com/icons/png/world_network_directories-1.png" width="32">
+                    <div style="flex:1;">
+                        <b>Default Web Site (localhost)</b><br>
+                        <span id="iis-status" style="color: green; font-weight: bold;">Status: RUNNING</span>
+                    </div>
                     <button class="win-action" onclick="toggleServer(true)">▶ Start</button>
                     <button class="win-action" onclick="toggleServer(false)">⏹ Stop</button>
-                    <span style="align-self: center; font-weight: bold; color: green;" id="iis-status">Status: RUNNING</span>
                 </div>
                 <b>Real-Time HTTP Access Logs:</b>
-                <div id="iis-logs" style="background: #fff; border: 2px inset #fff; height: 150px; overflow-y: auto; font-family: monospace; font-size: 10px; padding: 2px;">
-                    Started IIS Web Engine...<br>
+                <div id="iis-logs" style="background: #000; color: #0f0; border: 2px inset #fff; height: 120px; overflow-y: auto; font-family: 'VT323', monospace; font-size: 14px; padding: 4px;">
+                    Started IIS Web Engine on port 80...<br>
                 </div>
             </div>
         </div>
 
-        <!-- APP 3: FILE EXPLORER -->
-        <div class="win-classic app-win" id="explorer-app" style="top:15%; left:15%; width: 500px; height: 350px;">
+        <!-- APP: NOTEPAD (THE EDITOR) -->
+        <div class="win-classic app-win" id="notepad-app" style="top:20%; left:25%; width: 400px; height: 350px;">
+            <div class="title-bar" id="drag-notepad">
+                <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/notepad-5.png" width="14"> index.html - Notepad</div>
+                <div class="win-controls"><div class="win-btn" onclick="closeApp('notepad-app')">X</div></div>
+            </div>
+            <div class="menu-bar">
+                <span class="menu-btn" onclick="saveNotepad()" style="color: blue; font-weight: bold;"><u>F</u>ile (Save to localhost)</span> 
+                <span class="menu-btn"><u>E</u>dit</span> 
+                <span class="menu-btn"><u>S</u>earch</span>
+            </div>
+            <textarea id="notepad-content" style="flex:1; border:none; border-top: 1px solid #fff; padding:5px; resize:none;">&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;NT Server Admin Page&lt;/title&gt;
+&lt;/head&gt;
+&lt;body bgcolor="#000080" text="#FFFFFF"&gt;
+    &lt;center&gt;
+        &lt;h1&gt;Welcome to my NT Server!&lt;/h1&gt;
+        &lt;p&gt;If you can read this, IIS is working.&lt;/p&gt;
+        &lt;img src="https://gifcities.org/assets/construction.gif"&gt;
+        &lt;br&gt;&lt;br&gt;
+        &lt;b&gt;You can edit this text in Notepad and click 'Save' to update the site!&lt;/b&gt;
+    &lt;/center&gt;
+&lt;/body&gt;
+&lt;/html&gt;</textarea>
+        </div>
+
+        <!-- APP: RETRO BROWSER (NETSCAPE) -->
+        <div class="win-classic app-win" id="browser-app" style="top:15%; left:30%; width: 550px; height: 450px;">
+            <div class="title-bar" id="drag-browser">
+                <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/msie1-2.png" width="14"> Netscape Navigator 4.0</div>
+                <div class="win-controls"><div class="win-btn" onclick="closeApp('browser-app')">X</div></div>
+            </div>
+            <div class="menu-bar"><span class="menu-btn"><u>F</u>ile</span> <span class="menu-btn"><u>E</u>dit</span> <span class="menu-btn"><u>V</u>iew</span> <span class="menu-btn"><u>G</u>o</span></div>
+            <div style="background:#c0c0c0; padding:5px; display:flex; gap:10px; border-bottom: 2px outset #fff;">
+                <button class="win-action" style="font-weight:bold;" onclick="browse()">&lt; Back</button>
+                <button class="win-action" style="font-weight:bold; color:red;" onclick="document.getElementById('ie-content').innerHTML='<h1>Document stopped.</h1>';">X Stop</button>
+                <div style="display:flex; align-items:center; gap:5px; flex:1;">
+                    Address: <input type="text" id="browser-url" value="http://localhost" style="flex:1; font-size: 13px;" onkeydown="if(event.key==='Enter') browse()">
+                    <button class="win-action" onclick="browse()">Go</button>
+                </div>
+            </div>
+            <!-- WEB CONTENT DISPLAY -->
+            <div id="ie-content" style="background:#fff; flex:1; margin:2px; border:2px inset #808080; padding:10px; overflow-y:auto; color: #000;">
+                <!-- Renders dynamically from Notepad -->
+            </div>
+        </div>
+
+        <!-- APP: FILE EXPLORER -->
+        <div class="win-classic app-win" id="explorer-app" style="top:25%; left:15%; width: 500px; height: 350px;">
             <div class="title-bar" id="drag-explorer">
                 <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/directory_explorer-5.png" width="14"> C:\inetpub\wwwroot</div>
                 <div class="win-controls"><div class="win-btn" onclick="closeApp('explorer-app')">X</div></div>
             </div>
-            <div class="menu-bar"><u>F</u>ile &nbsp; <u>E</u>dit &nbsp; <u>V</u>iew &nbsp; <u>H</u>elp</div>
+            <div class="menu-bar"><span class="menu-btn"><u>F</u>ile</span> <span class="menu-btn"><u>E</u>dit</span> <span class="menu-btn"><u>V</u>iew</span></div>
             <div class="explorer-layout">
                 <div class="explorer-tree">
-                    <div style="margin-bottom:2px;">[-] C:</div>
-                    <div style="margin-left: 10px; margin-bottom:2px;">[+] WINNT</div>
-                    <div style="margin-left: 10px; margin-bottom:2px;">[-] inetpub</div>
-                    <div style="margin-left: 20px; font-weight:bold; background:#000080; color:#fff;">wwwroot</div>
+                    <div class="tree-item" onclick="updateExplorer('C:')">[-] C:</div>
+                    <div class="tree-item" style="margin-left: 10px;" onclick="updateExplorer('WINNT')">[+] WINNT</div>
+                    <div class="tree-item" style="margin-left: 10px;" onclick="updateExplorer('inetpub')">[-] inetpub</div>
+                    <div class="tree-item active" style="margin-left: 20px;" id="tree-www" onclick="updateExplorer('wwwroot')">wwwroot</div>
                 </div>
-                <div class="explorer-files">
-                    <div style="text-align:center; width: 60px;"><img src="https://win98icons.alexmeub.com/icons/png/html-0.png" width="32"><br>index.html</div>
-                    <div style="text-align:center; width: 60px;"><img src="https://win98icons.alexmeub.com/icons/png/html-0.png" width="32"><br>about.html</div>
-                    <div style="text-align:center; width: 60px;"><img src="https://win98icons.alexmeub.com/icons/png/gears-0.png" width="32"><br>form.cgi</div>
-                    <div style="text-align:center; width: 60px;"><img src="https://win98icons.alexmeub.com/icons/png/image_gif-0.png" width="32"><br>logo.gif</div>
+                <div class="explorer-files" id="explorer-files">
+                    <div style="text-align:center; width: 70px; cursor:pointer;" ondblclick="openApp('notepad-app')"><img src="https://win98icons.alexmeub.com/icons/png/html-0.png" width="32"><br>index.html</div>
+                    <div style="text-align:center; width: 70px;"><img src="https://win98icons.alexmeub.com/icons/png/image_gif-0.png" width="32"><br>logo.gif</div>
                 </div>
             </div>
         </div>
 
-        <!-- APP 4: FTP CLIENT -->
-        <div class="win-classic app-win" id="ftp-app" style="top:20%; left:20%; width: 450px;">
+        <!-- APP: FTP CLIENT -->
+        <div class="win-classic app-win" id="ftp-app" style="top:20%; left:40%; width: 480px;">
             <div class="title-bar" id="drag-ftp">
                 <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/world_network_directories-1.png" width="14"> WS_FTP Pro</div>
                 <div class="win-controls"><div class="win-btn" onclick="closeApp('ftp-app')">X</div></div>
             </div>
             <div style="padding: 10px;">
                 <div style="display: flex; gap: 5px; margin-bottom: 5px;">
-                    Host: <input type="text" value="ftp.geocities.com" style="width: 120px;">
+                    Host: <input type="text" value="ftp.geocities.com" style="width: 150px;">
                     <button class="win-action" onclick="runFTP()">Connect</button>
                 </div>
                 <div style="display: flex; gap: 10px;">
-                    <div class="ftp-pane"><b>Local System</b><br>C:\projects\web<br>- index.html<br>- style.css</div>
+                    <div class="ftp-pane"><b>Local System</b><br>C:\inetpub\wwwroot<br><br><span style="color:blue">index.html</span><br>logo.gif</div>
                     <div style="display:flex; flex-direction:column; justify-content:center; gap:5px;">
-                        <button class="win-action">--></button>
-                        <button class="win-action"><--</button>
+                        <button class="win-action" onclick="playClick()">--></button>
+                        <button class="win-action" onclick="playClick()"><--</button>
                     </div>
-                    <div class="ftp-pane"><b>Remote System</b><br>/www/htdocs/<br><span style="color:gray;">Not connected</span></div>
+                    <div class="ftp-pane" id="ftp-remote"><b>Remote System</b><br>/www/htdocs/<br><br><span style="color:gray;">Not connected</span></div>
                 </div>
-                <div id="ftp-log" style="background:#fff; border:2px inset #fff; height:60px; overflow-y:auto; margin-top:5px; font-family:monospace; padding:2px;">WINSOCK.DLL loaded.</div>
+                <div id="ftp-log" style="background:#fff; border:2px inset #fff; height:70px; overflow-y:auto; margin-top:5px; font-family:monospace; padding:4px;">WINSOCK.DLL loaded. Ready.</div>
             </div>
         </div>
 
-        <!-- APP 5: NOTEPAD -->
-        <div class="win-classic app-win" id="notepad-app" style="top:25%; left:25%; width: 400px; height: 300px;">
-            <div class="title-bar" id="drag-notepad">
-                <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/notepad-5.png" width="14"> index.html - Notepad</div>
-                <div class="win-controls"><div class="win-btn" onclick="closeApp('notepad-app')">X</div></div>
-            </div>
-            <div class="menu-bar"><u>F</u>ile &nbsp; <u>E</u>dit &nbsp; <u>S</u>earch &nbsp; <u>H</u>elp</div>
-            <textarea style="flex:1; border:none; border-top: 1px solid #fff; padding:4px; resize:none;">&lt;html&gt;
-&lt;head&gt;
-    &lt;title&gt;My Awesome 90s Page&lt;/title&gt;
-&lt;/head&gt;
-&lt;body bgcolor="#000000" text="#00FF00"&gt;
-    &lt;h1&gt;Welcome to my homepage!&lt;/h1&gt;
-    &lt;img src="under_construction.gif"&gt;
-&lt;/body&gt;
-&lt;/html&gt;</textarea>
-        </div>
-
-        <!-- APP 6: TELNET / SSH -->
-        <div class="win-classic app-win" id="telnet-app" style="top:5%; left:40%; width: 400px; height: 250px;">
+        <!-- APP: TELNET / SSH -->
+        <div class="win-classic app-win" id="telnet-app" style="top:5%; left:50%; width: 450px; height: 280px;">
             <div class="title-bar" id="drag-telnet">
-                <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/console_prompt-0.png" width="14"> PuTTY (Inactive) - root@10.0.0.5</div>
+                <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/console_prompt-0.png" width="14"> PuTTY - root@unix-server</div>
                 <div class="win-controls"><div class="win-btn" onclick="closeApp('telnet-app')">X</div></div>
             </div>
             <div class="cli-screen" id="telnet-screen" onclick="document.getElementById('telnet-in').focus()">
@@ -242,56 +308,51 @@
                 login: root<br>
                 Password: *******<br>
                 Welcome to FreeBSD!<br>
+                Try 'help' or 'rm -rf /'<br>
                 <div id="telnet-history"></div>
-                <div style="display:flex;">root@server:~ # <input type="text" id="telnet-in" class="cli-input" onkeydown="handleTelnet(event)" autocomplete="off"></div>
+                <div style="display:flex;">root@unix:~ # <input type="text" id="telnet-in" class="cli-input" onkeydown="handleTelnet(event)" autocomplete="off"></div>
             </div>
         </div>
 
-        <!-- APP 7: RETRO BROWSER -->
-        <div class="win-classic app-win" id="browser-app" style="top:10%; left:30%; width: 500px; height: 400px;">
-            <div class="title-bar" id="drag-browser">
-                <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/msie1-2.png" width="14"> Netscape Navigator</div>
-                <div class="win-controls"><div class="win-btn" onclick="closeApp('browser-app')">X</div></div>
+        <!-- APP: MYSQL DB VIEWER -->
+        <div class="win-classic app-win" id="mysql-app" style="top:35%; left:35%; width: 450px; height: 250px;">
+            <div class="title-bar" id="drag-mysql">
+                <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/msdos-0.png" width="14"> MySQL Monitor 3.22</div>
+                <div class="win-controls"><div class="win-btn" onclick="closeApp('mysql-app')">X</div></div>
             </div>
-            <div class="menu-bar"><u>F</u>ile &nbsp; <u>E</u>dit &nbsp; <u>V</u>iew &nbsp; <u>G</u>o &nbsp; <u>B</u>ookmarks</div>
-            <div style="background:#c0c0c0; padding:4px; display:flex; gap:10px; border-bottom: 1px solid #808080;">
-                <button class="win-action" style="font-weight:bold;">&lt; Back</button>
-                <button class="win-action" style="font-weight:bold; color:red;">X Stop</button>
-                <div style="display:flex; align-items:center; gap:4px; flex:1;">
-                    Location: <input type="text" value="http://localhost/index.html" style="flex:1;">
-                </div>
-            </div>
-            <div style="background:#000; flex:1; margin:2px; border:2px inset #fff; padding:20px; text-align:center; color:#0f0; overflow-y:auto;">
-                <h1>Welcome to my homepage!</h1>
-                <marquee scrollamount="5" style="color:yellow; font-size:18px;">Best viewed in Netscape Navigator 4.0 at 800x600 resolution!</marquee><br><br>
-                <img src="https://gifcities.org/assets/construction.gif" alt="Under Construction"><br><br>
-                <p>This site is hosted on a mighty Pentium II Server.</p>
-                <button class="win-action" style="font-family:'Times New Roman';">Sign my Guestbook</button>
+            <div class="cli-screen" id="mysql-screen" onclick="document.getElementById('mysql-in').focus()" style="color: #dfdfdf;">
+                Welcome to the MySQL monitor. Commands end with ;<br>
+                Server version: 3.22.32-log<br><br>
+                Type 'show databases;' or 'select * from users;'<br><br>
+                <div id="mysql-history"></div>
+                <div style="display:flex;">mysql> <input type="text" id="mysql-in" class="cli-input" onkeydown="handleMySQL(event)" autocomplete="off"></div>
             </div>
         </div>
 
-        <!-- APP 8: EMAIL CLIENT -->
-        <div class="win-classic app-win" id="email-app" style="top:15%; left:35%; width: 450px; height: 350px;">
+        <!-- APP: EMAIL CLIENT -->
+        <div class="win-classic app-win" id="email-app" style="top:15%; left:10%; width: 450px; height: 350px;">
             <div class="title-bar" id="drag-email">
                 <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/envelope_closed-0.png" width="14"> Outlook Express - Inbox</div>
                 <div class="win-controls"><div class="win-btn" onclick="closeApp('email-app')">X</div></div>
             </div>
-            <div class="menu-bar"><u>F</u>ile &nbsp; <u>E</u>dit &nbsp; <u>M</u>essage &nbsp; <u>T</u>ools</div>
+            <div class="menu-bar"><span class="menu-btn"><u>F</u>ile</span> <span class="menu-btn"><u>E</u>dit</span> <span class="menu-btn"><u>M</u>essage</span></div>
             <div style="padding: 5px; display: flex; flex-direction: column; flex: 1;">
                 <div class="email-list">
-                    <div class="email-item active" onclick="showEmail(1)">[URGENT] CRON Daemon - Disk Space Low</div>
-                    <div class="email-item" onclick="showEmail(2)">Webmaster - CGI Script Error on line 42</div>
-                    <div class="email-item" onclick="showEmail(3)">Bill G. - Welcome to Windows NT 4.0</div>
+                    <div class="email-item active" onclick="showEmail(1, this)">[URGENT] CRON Daemon - Disk Space Low</div>
+                    <div class="email-item" onclick="showEmail(2, this)">Webmaster - CGI Script Error on line 42</div>
+                    <div class="email-item" onclick="showEmail(3, this)">Bill G. - Welcome to Windows NT 4.0</div>
                 </div>
-                <div id="email-body" style="border: 2px inset #fff; background: #fff; flex: 1; padding: 10px; font-family: monospace; overflow-y:auto;">
-                    <b>From:</b> root@localhost<br><b>To:</b> admin@server.local<br><b>Subject:</b> Disk Space Low<br><br>
-                    Warning: Drive C: (SCSI) is at 98% capacity.<br>Please delete old IIS log files in C:\WINNT\system32\LogFiles immediately.
+                <div id="email-body" style="border: 2px inset #fff; background: #fff; flex: 1; padding: 10px; font-family: 'Tahoma'; font-size: 12px; overflow-y:auto;">
+                    <div style="border-bottom: 1px solid #c0c0c0; padding-bottom: 5px; margin-bottom: 10px; background: #dfdfdf; padding: 5px;">
+                        <b>From:</b> root@localhost<br><b>To:</b> admin@server.local<br><b>Subject:</b> Disk Space Low
+                    </div>
+                    Warning: Drive C: (SCSI) is at 98% capacity.<br><br>Please delete old IIS log files in C:\WINNT\system32\LogFiles immediately or the server will crash.
                 </div>
             </div>
         </div>
 
-        <!-- APP 9: DEFRAGMENTER -->
-        <div class="win-classic app-win" id="defrag-app" style="top:25%; left:45%; width: 350px;">
+        <!-- APP: DEFRAGMENTER -->
+        <div class="win-classic app-win" id="defrag-app" style="top:35%; left:50%; width: 380px;">
             <div class="title-bar" id="drag-defrag">
                 <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/defragment-0.png" width="14"> Disk Defragmenter</div>
                 <div class="win-controls"><div class="win-btn" onclick="closeApp('defrag-app')">X</div></div>
@@ -301,67 +362,67 @@
                 <div style="margin-top: 5px; font-size: 10px;">
                     <span style="color: blue;">■</span> Contiguous &nbsp;
                     <span style="color: red;">■</span> Unmovable &nbsp;
-                    <span style="border:1px solid #000; width:8px; height:8px; display:inline-block;"></span> Free Space
+                    <span style="background: #dfdfdf; border:1px solid #c0c0c0; width:8px; height:8px; display:inline-block;"></span> Unoptimized
                 </div>
                 <div class="defrag-grid" id="defrag-grid"></div>
-                <div style="text-align:center; margin-top:10px;">
-                    <button class="win-action" onclick="startDefrag()">Start</button>
-                    <button class="win-action" onclick="stopDefrag()">Stop</button>
+                <div style="text-align:center; margin-top:15px; display: flex; justify-content: center; gap: 10px;">
+                    <button class="win-action" style="width: 80px; font-weight: bold;" onclick="startDefrag()">Start</button>
+                    <button class="win-action" style="width: 80px;" onclick="stopDefrag()">Stop</button>
                 </div>
             </div>
         </div>
 
-        <!-- APP 10: MYSQL DB VIEWER -->
-        <div class="win-classic app-win" id="mysql-app" style="top:30%; left:50%; width: 450px; height: 250px;">
-            <div class="title-bar" id="drag-mysql">
-                <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/msdos-0.png" width="14"> MySQL Monitor 3.22</div>
-                <div class="win-controls"><div class="win-btn" onclick="closeApp('mysql-app')">X</div></div>
+        <!-- DIALOG BOX -->
+        <div class="win-classic app-win" id="dialog-app" style="top:40%; left:30%; width:300px; z-index:9000;">
+            <div class="title-bar" id="drag-dialog"><span id="dialog-title">System Message</span><div class="win-controls"><div class="win-btn" onclick="closeApp('dialog-app')">X</div></div></div>
+            <div style="padding:15px; display:flex; gap:15px; align-items:center;">
+                <div id="dialog-icon" style="min-width:32px; height:32px; border-radius:50%; display:flex; justify-content:center; align-items:center; font-size:24px; font-weight:bold; border: 2px solid blue; color: blue; background: #fff;">i</div>
+                <div id="dialog-msg" style="font-size:12px; word-wrap:break-word; flex:1;"></div>
             </div>
-            <div class="cli-screen" id="mysql-screen" onclick="document.getElementById('mysql-in').focus()">
-                Welcome to the MySQL monitor. Commands end with ; or \g.<br>
-                Server version: 3.22.32-log<br><br>
-                Type 'help;' or '\h' for help.<br><br>
-                <div id="mysql-history"></div>
-                <div style="display:flex;">mysql> <input type="text" id="mysql-in" class="cli-input" onkeydown="handleMySQL(event)" autocomplete="off"></div>
-            </div>
+            <div style="text-align:center; padding-bottom:10px;"><button class="win-action" style="width: 80px;" onclick="closeApp('dialog-app')">OK</button></div>
         </div>
 
-        <!-- START MENU & TASKBAR -->
-        <div id="start-menu">
-            <div class="start-sidebar"><span><b>Windows</b> NT Server</span></div>
-            <div style="flex: 1; padding: 2px; display: flex; flex-direction: column; background: #c0c0c0;">
-                <div class="start-item" onclick="openApp('monitor-app')"><img src="https://win98icons.alexmeub.com/icons/png/performance-0.png" width="24"> System Monitor</div>
-                <div class="start-item" onclick="openApp('iis-app')"><img src="https://win98icons.alexmeub.com/icons/png/server_window-0.png" width="24"> IIS Manager</div>
-                <div class="start-item" onclick="openApp('explorer-app')"><img src="https://win98icons.alexmeub.com/icons/png/directory_explorer-5.png" width="24"> File Explorer</div>
-                <div style="height:2px; border-top:1px solid #808080; border-bottom:1px solid #fff; margin:2px 4px;"></div>
-                <div class="start-item" onclick="location.reload()"><img src="https://win98icons.alexmeub.com/icons/png/shut_down_cool-5.png" width="24"> Shut Down...</div>
-            </div>
-        </div>
-        <div class="taskbar">
-            <div class="start-btn" id="start-btn" onclick="toggleMenu(event)"><img src="https://win98icons.alexmeub.com/icons/png/windows-0.png" width="16"> Start</div>
-            <div class="taskbar-apps" id="taskbar-apps"></div>
-            <div class="sys-tray"><span id="clock" style="margin: 0 4px;">12:00</span></div>
-        </div>
+    </div>
+
+    <!-- BSOD (Blue Screen of Death) -->
+    <div id="bsod" onclick="location.reload()">
+        <span style="background: #fff; color: #0000aa; padding: 0 5px; font-weight: bold;">Windows</span><br><br>
+        A fatal exception 0E has occurred at 0137:BFF9B3D4. The current application will be terminated.<br><br>
+        * Press any key to terminate the current application.<br>
+        * Press CTRL+ALT+DEL again to restart your computer. You will lose any unsaved information in all applications.<br><br>
+        <div style="text-align: center;">Press any key or click to continue _</div>
     </div>
 
     <script>
+        // --- UTILS ---
         const sleep = ms => new Promise(r => setTimeout(r, ms));
         function playSnd(id) { let s = document.getElementById(id); if(s){ s.currentTime=0; let p = s.play(); if(p) p.catch(()=>{}); } }
         function playClick() { playSnd('snd-click'); }
+        function showDialog(title, msg, isError = false) {
+            playSnd(isError ? 'snd-error' : 'snd-click');
+            document.getElementById('dialog-title').innerText = title;
+            document.getElementById('dialog-msg').innerText = msg;
+            let icon = document.getElementById('dialog-icon');
+            if(isError) { icon.innerText = 'X'; icon.style.color = 'red'; icon.style.borderColor = 'red'; }
+            else { icon.innerText = 'i'; icon.style.color = 'blue'; icon.style.borderColor = 'blue'; }
+            openApp('dialog-app');
+        }
+        function triggerBSOD() {
+            playSnd('snd-error');
+            document.getElementById('os-environment').style.display = 'none';
+            document.getElementById('bsod').style.display = 'block';
+        }
 
         // --- BOOT SEQUENCE ---
-        document.getElementById('boot-prompt').style.display = 'none';
+        document.getElementById('boot-prompt').addEventListener('click', iniciarPOST);
         
         async function iniciarPOST() {
-            document.getElementById('start-btn-init').style.display = 'none';
+            document.getElementById('boot-prompt').style.display = 'none';
             playSnd('snd-startup');
-            
             let memEl = document.getElementById('mem-test');
             for(let i=0; i<=131072; i+=16384) { memEl.innerText = i; await sleep(80); }
-            
             document.getElementById('bios-details').style.display = 'block';
             await sleep(1500);
-            
             document.getElementById('bios-screen').style.display = 'none';
             document.getElementById('login-screen').style.display = 'flex';
             document.getElementById('login-pass').focus();
@@ -373,90 +434,102 @@
             document.getElementById('os-environment').style.display = 'block';
             initSysMonitor();
             initDefragGrid();
+            // Auto open instructions
+            setTimeout(() => { openApp('notepad-app'); }, 500);
         }
 
-        // CLOCK
-        setInterval(() => {
-            let n = new Date(); let h = n.getHours().toString().padStart(2,'0'); let m = n.getMinutes().toString().padStart(2,'0');
-            document.getElementById('clock').innerText = `${h}:${m}`;
-        }, 1000);
-
-        // --- WINDOW MANAGER ---
-        let zIndex = 100, apps = {};
-        
-        function selectIcon(el) {
-            document.querySelectorAll('.desktop-icon').forEach(i=>i.classList.remove('selected'));
-            el.classList.add('selected');
-            playClick();
-        }
-
-        function focusApp(id) {
-            let w = document.getElementById(id); if(!w || w.style.display==='none') return;
-            w.style.zIndex = ++zIndex;
-            document.querySelectorAll('.title-bar').forEach(tb => tb.classList.add('inactive'));
-            w.querySelector('.title-bar').classList.remove('inactive');
-            document.querySelectorAll('.taskbar-item').forEach(b => b.classList.remove('active'));
-            let b = document.getElementById('task-'+id); if(b) b.classList.add('active');
-        }
-        
-        document.querySelectorAll('.app-win').forEach(w => w.addEventListener('pointerdown', ()=>focusApp(w.id)));
-
-        function openApp(id) {
-            playClick();
-            let w = document.getElementById(id); 
-            if(!w) return;
-            
-            if(!apps[id]) {
-                apps[id] = true; 
-                let icon = w.querySelector('.title-bar img').src;
-                let name = w.querySelector('.title-bar div').innerText;
-                let btn = document.createElement('div'); btn.className='taskbar-item active'; btn.id='task-'+id;
-                btn.innerHTML = `<img src="${icon}"><span>${name}</span>`; 
-                btn.onclick = ()=>toggleApp(id);
-                document.getElementById('taskbar-apps').appendChild(btn);
+        // --- CONTEXT MENU (DESKTOP) ---
+        document.addEventListener('contextmenu', e => {
+            if(e.target.id === 'desktop-area' || e.target.closest('#desktop-area')) {
+                e.preventDefault();
+                let menu = document.getElementById('context-menu');
+                menu.style.display = 'flex';
+                menu.style.left = e.clientX + 'px';
+                menu.style.top = e.clientY + 'px';
             }
-            w.style.display='flex';
-            focusApp(id);
-        }
-
-        function closeApp(id) { 
-            playClick(); 
-            document.getElementById(id).style.display='none'; 
-            if(apps[id]){ delete apps[id]; let t=document.getElementById('task-'+id); if(t)t.remove(); } 
-        }
-
-        function toggleApp(id) { 
-            playClick(); 
-            let w=document.getElementById(id); 
-            if(w.style.display==='none'){ w.style.display='flex'; focusApp(id); } 
-            else { if(w.style.zIndex == zIndex) { w.style.display='none'; document.getElementById('task-'+id).classList.remove('active'); } else { focusApp(id); } } 
-        }
-
-        // DRAG WINDOWS
-        document.querySelectorAll('.app-win').forEach(w => {
-            let dragZone = w.querySelector('.title-bar'); if(!dragZone) return;
-            let isDragging = false, startX, startY, initX, initY;
-            dragZone.addEventListener('pointerdown', e => {
-                if(e.target.closest('.win-controls')) return;
-                isDragging = true; startX = e.clientX; startY = e.clientY; initX = w.offsetLeft; initY = w.offsetTop;
-                dragZone.setPointerCapture(e.pointerId);
-            });
-            dragZone.addEventListener('pointermove', e => {
-                if(!isDragging) return;
-                w.style.left = (initX + e.clientX - startX) + 'px'; w.style.top = Math.max(0, initY + e.clientY - startY) + 'px';
-            });
-            dragZone.addEventListener('pointerup', e => { isDragging = false; dragZone.releasePointerCapture(e.pointerId); });
         });
+        document.addEventListener('click', e => { document.getElementById('context-menu').style.display = 'none'; });
 
-        // START MENU
-        function toggleMenu(e) { playClick(); e.stopPropagation(); let m = document.getElementById('start-menu'); m.style.display = m.style.display==='flex'?'none':'flex'; document.getElementById('start-btn').classList.toggle('active'); }
-        function closeMenu() { document.getElementById('start-menu').style.display='none'; document.getElementById('start-btn').classList.remove('active'); }
-        document.addEventListener('pointerdown', e => { if(!e.target.closest('#start-menu') && !e.target.closest('.start-btn')) closeMenu(); });
+        // --- THE "LOCALHOST" INTEGRATION CORE (Notepad + IIS + Browser) ---
+        let customHTML = document.getElementById('notepad-content').value;
+        let iisRunning = true, iisInt;
+
+        function saveNotepad() {
+            playClick();
+            customHTML = document.getElementById('notepad-content').value;
+            showDialog("Save Successful", "File index.html saved successfully to C:\\inetpub\\wwwroot\\");
+        }
+
+        function toggleServer(state) {
+            playClick();
+            iisRunning = state;
+            let statusEl = document.getElementById('iis-status');
+            statusEl.innerText = state ? "Status: RUNNING" : "Status: STOPPED";
+            statusEl.style.color = state ? "green" : "red";
+            if(!state) logIIS("Server gracefully stopped.");
+            else logIIS("Server started on port 80.");
+        }
+
+        function logIIS(msg) {
+            let log = document.getElementById('iis-logs');
+            let n = new Date(); let time = `${n.getHours()}:${n.getMinutes()}:${n.getSeconds()}`;
+            log.innerHTML += `[${time}] ${msg}<br>`;
+            log.scrollTop = 9999;
+        }
+
+        function browse() {
+            playClick();
+            let url = document.getElementById('browser-url').value.toLowerCase();
+            let display = document.getElementById('ie-content');
+            
+            if(url === 'http://localhost' || url === 'http://127.0.0.1' || url === 'localhost') {
+                if(!iisRunning) {
+                    display.innerHTML = "<h2 style='color:red; font-family:sans-serif;'>Connection Refused</h2><p style='font-family:sans-serif;'>The IIS Server at localhost is not responding or is stopped.</p>";
+                } else {
+                    display.innerHTML = customHTML; // THE MAGIC HAPPENS HERE
+                    logIIS(`127.0.0.1 - GET /index.html HTTP/1.1 200 OK`);
+                }
+            } else {
+                display.innerHTML = `<h2 style='color:black; font-family:sans-serif;'>DNS Error</h2><p style='font-family:sans-serif;'>Cannot resolve host: ${url}. Check your dial-up connection.</p>`;
+            }
+        }
+
+        // Fake background traffic for IIS
+        setInterval(() => {
+            if(iisRunning && document.getElementById('iis-app').style.display !== 'none') {
+                if(Math.random() > 0.6) {
+                    let ips = ['192.168.1.45', '200.14.55.2', '10.0.0.99', '64.233.160.0'];
+                    logIIS(`${ips[Math.floor(Math.random()*4)]} - GET /logo.gif HTTP/1.0 200 OK`);
+                }
+            }
+        }, 3000);
 
 
-        // ==========================================
-        // APP LOGIC: SYSTEM MONITOR (CANVAS)
-        // ==========================================
+        // --- FILE EXPLORER INTERACTIVITY ---
+        function updateExplorer(folder) {
+            playClick();
+            document.querySelectorAll('.tree-item').forEach(i => i.classList.remove('active'));
+            event.target.classList.add('active');
+            let files = document.getElementById('explorer-files');
+            files.innerHTML = '';
+            
+            if(folder === 'wwwroot') {
+                files.innerHTML = `
+                    <div style="text-align:center; width: 60px; cursor:pointer;" ondblclick="openApp('notepad-app')"><img src="https://win98icons.alexmeub.com/icons/png/html-0.png" width="32"><br>index.html</div>
+                    <div style="text-align:center; width: 60px;"><img src="https://win98icons.alexmeub.com/icons/png/image_gif-0.png" width="32"><br>logo.gif</div>
+                `;
+            } else if(folder === 'WINNT') {
+                files.innerHTML = `
+                    <div style="text-align:center; width: 60px;"><img src="https://win98icons.alexmeub.com/icons/png/directory_closed-4.png" width="32"><br>system32</div>
+                    <div style="text-align:center; width: 60px;"><img src="https://win98icons.alexmeub.com/icons/png/gears-0.png" width="32"><br>regedit.exe</div>
+                `;
+            } else {
+                files.innerHTML = '<div style="color:gray; width:100%; text-align:center; padding-top:20px;">Folder is empty</div>';
+            }
+        }
+
+
+        // --- APP LOGIC: SYSTEM MONITOR (CANVAS) ---
         let sysMonCtx, cpuHistory = new Array(100).fill(0);
         function initSysMonitor() {
             let canvas = document.getElementById('cpu-graph');
@@ -464,161 +537,108 @@
             sysMonCtx = canvas.getContext('2d');
             
             setInterval(() => {
-                // Generate fake CPU load
-                let newVal = Math.floor(Math.random() * 30);
-                if(Math.random() > 0.8) newVal += 50; // Spikes
+                let newVal = Math.floor(Math.random() * 20) + 5;
+                if(Math.random() > 0.8) newVal += 60; // Random CPU Spikes
                 if(newVal > 100) newVal = 100;
                 
                 document.getElementById('cpu-val').innerText = newVal;
-                cpuHistory.push(newVal);
-                cpuHistory.shift();
+                cpuHistory.push(newVal); cpuHistory.shift();
 
-                // Draw Graph
-                sysMonCtx.fillStyle = '#000';
-                sysMonCtx.fillRect(0, 0, canvas.width, canvas.height);
+                sysMonCtx.fillStyle = '#000'; sysMonCtx.fillRect(0, 0, canvas.width, canvas.height);
                 
-                // Grid lines
                 sysMonCtx.strokeStyle = '#004000'; sysMonCtx.lineWidth = 1;
-                for(let i=0; i<canvas.height; i+=20) { sysMonCtx.beginPath(); sysMonCtx.moveTo(0,i); sysMonCtx.lineTo(canvas.width,i); sysMonCtx.stroke(); }
-                for(let i=0; i<canvas.width; i+=20) { sysMonCtx.beginPath(); sysMonCtx.moveTo(i,0); sysMonCtx.lineTo(i,canvas.height); sysMonCtx.stroke(); }
+                for(let i=0; i<canvas.height; i+=15) { sysMonCtx.beginPath(); sysMonCtx.moveTo(0,i); sysMonCtx.lineTo(canvas.width,i); sysMonCtx.stroke(); }
+                for(let i=0; i<canvas.width; i+=15) { sysMonCtx.beginPath(); sysMonCtx.moveTo(i,0); sysMonCtx.lineTo(i,canvas.height); sysMonCtx.stroke(); }
 
-                // Line
                 sysMonCtx.strokeStyle = '#0f0'; sysMonCtx.lineWidth = 2;
                 sysMonCtx.beginPath();
                 let step = canvas.width / 100;
                 for(let i=0; i<100; i++) {
-                    let x = i * step;
-                    let y = canvas.height - (cpuHistory[i] / 100 * canvas.height);
+                    let x = i * step; let y = canvas.height - (cpuHistory[i] / 100 * canvas.height);
                     if(i===0) sysMonCtx.moveTo(x, y); else sysMonCtx.lineTo(x, y);
                 }
                 sysMonCtx.stroke();
-            }, 500);
+            }, 300);
         }
 
-        // ==========================================
-        // APP LOGIC: IIS SERVER
-        // ==========================================
-        let iisRunning = true, iisInt;
-        function toggleServer(state) {
-            playClick();
-            iisRunning = state;
-            document.getElementById('iis-status').innerText = state ? "Status: RUNNING" : "Status: STOPPED";
-            document.getElementById('iis-status').style.color = state ? "green" : "red";
-            
-            if(state && !iisInt) {
-                iisInt = setInterval(() => {
-                    let ips = ['192.168.1.45', '200.14.55.2', '10.0.0.99', '127.0.0.1'];
-                    let files = ['/index.html', '/images/logo.gif', '/cgi-bin/form.pl', '/style.css'];
-                    let log = document.getElementById('iis-logs');
-                    let n = new Date(); let time = `${n.getHours()}:${n.getMinutes()}:${n.getSeconds()}`;
-                    log.innerHTML += `${ips[Math.floor(Math.random()*4)]} - - [${time}] "GET ${files[Math.floor(Math.random()*4)]} HTTP/1.0" 200<br>`;
-                    log.scrollTop = 9999;
-                }, 2000);
-            } else if (!state) {
-                clearInterval(iisInt); iisInt = null;
-                document.getElementById('iis-logs').innerHTML += "Server stopped gracefully.<br>";
-            }
-        }
-        toggleServer(true); // Start by default
-
-        // ==========================================
-        // APP LOGIC: FTP CLIENT
-        // ==========================================
+        // --- APP LOGIC: FTP CLIENT ---
         async function runFTP() {
             playClick();
             let log = document.getElementById('ftp-log');
-            log.innerHTML = "Resolving host...<br>"; await sleep(500);
-            log.innerHTML += "Connecting to 209.1.22.4...<br>"; await sleep(800);
-            log.innerHTML += "<span style='color:blue'>220 ProFTPD 1.2.0 Server ready.</span><br>"; await sleep(400);
-            log.innerHTML += "USER anonymous<br>"; await sleep(300);
+            log.innerHTML = "Resolving host...<br>"; await sleep(400);
+            log.innerHTML += "Connecting to 209.1.22.4...<br>"; await sleep(600);
+            log.innerHTML += "<span style='color:blue'>220 ProFTPD 1.2.0 Server ready.</span><br>"; await sleep(300);
+            log.innerHTML += "USER anonymous<br>"; await sleep(200);
             log.innerHTML += "<span style='color:blue'>331 Password required for anonymous.</span><br>"; await sleep(300);
-            log.innerHTML += "PASS IEUser@<br>"; await sleep(500);
-            log.innerHTML += "<span style='color:green'>230 User anonymous logged in.</span><br>";
+            log.innerHTML += "PASS IEUser@<br>"; await sleep(400);
+            log.innerHTML += "<span style='color:green'>230 User logged in. Access granted.</span><br>";
             log.scrollTop = 9999;
-            document.querySelectorAll('.ftp-pane')[1].innerHTML = "<b>Remote System</b><br>/www/htdocs/<br>- public_html<br>- cgi-bin";
+            document.getElementById('ftp-remote').innerHTML = "<b>Remote System</b><br>/www/htdocs/<br><br><span style='color:blue'>public_html</span><br><span style='color:blue'>cgi-bin</span><br>readme.txt";
         }
 
-        // ==========================================
-        // APP LOGIC: TELNET
-        // ==========================================
+        // --- APP LOGIC: TELNET ---
         function handleTelnet(e) {
             if(e.key === 'Enter') {
-                let input = document.getElementById('telnet-in'); let cmd = input.value.trim().toLowerCase();
+                let input = document.getElementById('telnet-in'); let cmd = input.value.trim();
                 let hist = document.getElementById('telnet-history'); 
-                hist.innerHTML += `root@server:~ # ${cmd}<br>`; input.value = "";
-                let res = cmd==="ls" ? "bin  boot  dev  etc  home  lib  mnt  root  sbin  tmp  usr  var<br>" : cmd==="uname -a" ? "FreeBSD server.local 2.2.8-RELEASE FreeBSD 2.2.8-RELEASE #0: i386<br>" : cmd==="exit" ? "Connection closed by foreign host.<br>" : "Command not found.<br>";
-                hist.innerHTML += res;
-                if(cmd==="exit") setTimeout(()=>closeApp('telnet-app'), 1000);
-                document.getElementById('telnet-screen').scrollTop = 9999;
+                hist.innerHTML += `root@unix:~ # ${cmd}<br>`; input.value = "";
+                let res = "Command not found.<br>";
+                if(cmd === "ls") res = "bin  boot  dev  etc  home  lib  mnt  root  sbin  tmp  usr  var<br>";
+                if(cmd === "uname -a") res = "FreeBSD unix-server 2.2.8-RELEASE FreeBSD 2.2.8-RELEASE #0: i386<br>";
+                if(cmd === "rm -rf /") return triggerBSOD(); // Easter egg
+                if(cmd === "exit") { res = "Connection closed.<br>"; setTimeout(()=>closeApp('telnet-app'), 1000); }
+                if(cmd === "") res = "";
+                hist.innerHTML += res; document.getElementById('telnet-screen').scrollTop = 9999;
             }
         }
 
-        // ==========================================
-        // APP LOGIC: MYSQL CLI
-        // ==========================================
+        // --- APP LOGIC: MYSQL CLI ---
         function handleMySQL(e) {
             if(e.key === 'Enter') {
                 let input = document.getElementById('mysql-in'); let cmd = input.value.trim();
                 let hist = document.getElementById('mysql-history'); 
                 hist.innerHTML += `mysql> ${cmd}<br>`; input.value = "";
                 let res = "";
-                if(cmd.toUpperCase() === "SELECT * FROM USERS;") {
-                    res = "+----+----------+----------+<br>| id | username | role     |<br>+----+----------+----------+<br>|  1 | admin    | super    |<br>|  2 | webuser  | readonly |<br>+----+----------+----------+<br>2 rows in set (0.01 sec)<br>";
-                } else if(cmd.toUpperCase() === "SHOW DATABASES;") {
-                    res = "+-----------+<br>| Database  |<br>+-----------+<br>| mysql     |<br>| test      |<br>| web_data  |<br>+-----------+<br>3 rows in set (0.00 sec)<br>";
-                } else if(cmd.toLowerCase() === "exit" || cmd.toLowerCase() === "quit") {
-                    res = "Bye<br>"; setTimeout(()=>closeApp('mysql-app'), 1000);
-                } else {
-                    res = "ERROR 1064: You have an error in your SQL syntax near '" + cmd + "'.<br>";
-                }
-                hist.innerHTML += res;
-                document.getElementById('mysql-screen').scrollTop = 9999;
+                if(cmd.toUpperCase() === "SELECT * FROM USERS;") res = "+----+----------+----------+<br>| id | username | role     |<br>+----+----------+----------+<br>|  1 | admin    | super    |<br>|  2 | webuser  | readonly |<br>+----+----------+----------+<br>2 rows in set (0.01 sec)<br>";
+                else if(cmd.toUpperCase() === "SHOW DATABASES;") res = "+-----------+<br>| Database  |<br>+-----------+<br>| mysql     |<br>| test      |<br>| web_data  |<br>+-----------+<br>3 rows in set (0.00 sec)<br>";
+                else if(cmd.toLowerCase() === "exit" || cmd.toLowerCase() === "quit") { res = "Bye<br>"; setTimeout(()=>closeApp('mysql-app'), 1000); } 
+                else if(cmd !== "") res = "ERROR 1064: You have an error in your SQL syntax.<br>";
+                hist.innerHTML += res; document.getElementById('mysql-screen').scrollTop = 9999;
             }
         }
 
-        // ==========================================
-        // APP LOGIC: DISK DEFRAGMENTER
-        // ==========================================
+        // --- APP LOGIC: DISK DEFRAGMENTER ---
         let defragInt;
         function initDefragGrid() {
             let grid = document.getElementById('defrag-grid'); grid.innerHTML = '';
-            for(let i=0; i<200; i++) {
-                let block = document.createElement('div');
-                block.className = 'd-block';
-                // Randomize initial state: red (unmovable), white (free), or gray (fragmented data)
+            for(let i=0; i<250; i++) {
+                let block = document.createElement('div'); block.className = 'd-block';
                 let rand = Math.random();
-                if(rand > 0.95) block.style.backgroundColor = 'red';
-                else if(rand > 0.6) block.style.backgroundColor = '#dfdfdf';
+                if(rand > 0.95) block.style.backgroundColor = 'red'; // Unmovable
+                else if(rand > 0.5) block.style.backgroundColor = '#dfdfdf'; // Fragmented
                 grid.appendChild(block);
             }
         }
         function startDefrag() {
             playClick(); clearInterval(defragInt);
-            let blocks = document.querySelectorAll('.d-block');
-            let current = 0;
+            let blocks = document.querySelectorAll('.d-block'); let current = 0;
             defragInt = setInterval(() => {
-                if(current >= blocks.length) { clearInterval(defragInt); return playSnd('snd-tada'); }
-                if(blocks[current].style.backgroundColor !== 'red') {
-                    blocks[current].style.backgroundColor = 'blue'; // contiguous
-                }
+                if(current >= blocks.length) { clearInterval(defragInt); playSnd('snd-tada'); showDialog("Complete", "Defragmentation of Drive C: is complete.", false); return; }
+                if(blocks[current].style.backgroundColor !== 'red') blocks[current].style.backgroundColor = 'blue'; // Contiguous
                 current++;
-            }, 50);
+            }, 30);
         }
         function stopDefrag() { playClick(); clearInterval(defragInt); }
 
-        // ==========================================
-        // APP LOGIC: OUTLOOK EXPRESS (EMAIL)
-        // ==========================================
-        function showEmail(id) {
+        // --- APP LOGIC: EMAIL ---
+        function showEmail(id, el) {
             playClick();
-            document.querySelectorAll('.email-item').forEach(i=>i.classList.remove('active'));
-            event.target.classList.add('active');
+            document.querySelectorAll('.email-item').forEach(i=>i.classList.remove('active')); el.classList.add('active');
             let body = document.getElementById('email-body');
-            if(id===1) body.innerHTML = "<b>From:</b> root@localhost<br><b>To:</b> admin@server.local<br><b>Subject:</b> Disk Space Low<br><br>Warning: Drive C: (SCSI) is at 98% capacity.<br>Please delete old IIS log files in C:\\WINNT\\system32\\LogFiles immediately.";
-            if(id===2) body.innerHTML = "<b>From:</b> webmaster@geocities.com<br><b>To:</b> admin@server.local<br><b>Subject:</b> CGI Script Error<br><br>The form.pl script is throwing a 500 Internal Server Error. Check permissions (chmod 755).";
-            if(id===3) body.innerHTML = "<b>From:</b> billg@microsoft.com<br><b>To:</b> admin@server.local<br><b>Subject:</b> Welcome!<br><br>Thank you for installing Windows NT Server 4.0.<br>The most robust network operating system.";
+            if(id===1) body.innerHTML = "<div style='border-bottom: 1px solid #c0c0c0; padding-bottom: 5px; margin-bottom: 10px; background: #dfdfdf; padding: 5px;'><b>From:</b> root@localhost<br><b>To:</b> admin@server.local<br><b>Subject:</b> Disk Space Low</div>Warning: Drive C: (SCSI) is at 98% capacity.<br>Please delete old IIS log files immediately.";
+            if(id===2) body.innerHTML = "<div style='border-bottom: 1px solid #c0c0c0; padding-bottom: 5px; margin-bottom: 10px; background: #dfdfdf; padding: 5px;'><b>From:</b> webmaster@geocities.com<br><b>To:</b> admin@server.local<br><b>Subject:</b> CGI Script Error</div>The form.pl script is throwing a 500 Internal Server Error. Check chmod permissions.";
+            if(id===3) body.innerHTML = "<div style='border-bottom: 1px solid #c0c0c0; padding-bottom: 5px; margin-bottom: 10px; background: #dfdfdf; padding: 5px;'><b>From:</b> billg@microsoft.com<br><b>To:</b> admin@server.local<br><b>Subject:</b> Welcome!</div>Thank you for installing Windows NT Server 4.0.<br>The most robust network operating system ever created.";
         }
-
     </script>
 </body>
 </html>
