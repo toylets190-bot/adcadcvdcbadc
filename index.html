@@ -3,272 +3,394 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Windows 98 / Ultimate Retro OS</title>
+    <title>Windows NT 4.0 Server Edition</title>
     <style>
         /* --- CORE SYSTEM & FONTS --- */
         @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
-        * { box-sizing: border-box; user-select: none; font-family: 'Tahoma', 'Segoe UI', sans-serif; }
-        body { background: #008080; margin: 0; height: 100dvh; width: 100vw; overflow: hidden; font-size: 11px; color: #000; cursor: default; touch-action: none; }
+        * { box-sizing: border-box; user-select: none; font-family: 'Tahoma', 'MS Sans Serif', sans-serif; }
+        body { background: #008080; margin: 0; height: 100dvh; width: 100vw; overflow: hidden; font-size: 11px; color: #000; cursor: default; }
+        
+        /* SCROLLBARS CLÁSSICOS */
         ::-webkit-scrollbar { width: 16px; height: 16px; background: #dfdfdf; border-left: 1px solid #fff; border-top: 1px solid #fff; }
         ::-webkit-scrollbar-thumb { background: #c0c0c0; border: 2px outset #fff; }
 
-        /* TRAVA DE IFRAME DURANTE O ARRASTO */
-        body.dragging iframe { pointer-events: none !important; }
+        /* CRT EFFECT */
+        body.crt { filter: contrast(1.1) brightness(0.9); }
+        .crt::before { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.1) 50%); background-size: 100% 3px; z-index: 999999; pointer-events: none; }
 
-        /* DESKTOP E ÍCONES */
+        /* BOOT SCREEN */
+        .fullscreen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000000; background: #000; color: #c0c0c0; font-family: 'VT323', monospace; font-size: 18px;}
+        #bios-screen { justify-content: flex-start; align-items: flex-start; padding: 20px; }
+
+        /* DESKTOP */
         #os-environment { display: none; width: 100%; height: 100dvh; position: relative; overflow: hidden; }
-        #desktop-area { position: absolute; top: 0; left: 0; width: 100%; height: calc(100dvh - 30px); z-index: 1; display: flex; flex-direction: column; flex-wrap: wrap; align-content: flex-start; gap: 5px; padding: 10px; }
+        #desktop-area { position: absolute; top: 0; left: 0; width: 100%; height: calc(100dvh - 30px); z-index: 1; display: flex; flex-direction: column; flex-wrap: wrap; align-content: flex-start; padding: 5px; gap: 10px;}
         
-        .desktop-icon { width: 75px; height: 75px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; text-align: center; z-index: 2; padding: 5px; cursor: pointer; position: relative;}
+        .desktop-icon { width: 75px; display: flex; flex-direction: column; align-items: center; text-align: center; z-index: 2; padding: 5px; cursor: pointer;}
         .desktop-icon img { width: 32px; height: 32px; margin-bottom: 4px; pointer-events: none; }
         .desktop-icon span { color: #fff; padding: 2px 4px; font-size: 11px; text-shadow: 1px 1px 0 #000; line-height: 12px; }
         .desktop-icon.selected img { filter: brightness(0.5) sepia(1) hue-rotate(200deg) saturate(5); }
         .desktop-icon.selected span { background: #000080; border: 1px dotted #fff; text-shadow: none; }
 
-        /* BARRA DE TAREFAS E MENU INICIAR */
+        /* TASKBAR */
         .taskbar { position: absolute; bottom: 0; width: 100%; height: 30px; background: #c0c0c0; border-top: 1px solid #dfdfdf; box-shadow: inset 0 1px 0 #fff; display: flex; justify-content: space-between; align-items: center; padding: 2px; z-index: 99999; }
         .start-btn { font-weight: bold; display: flex; align-items: center; gap: 4px; padding: 0 6px; border: 2px outset #fff; background: #c0c0c0; height: 100%; cursor: pointer;}
         .start-btn:active, .start-btn.active { border: 2px inset #fff; padding: 1px 5px -1px 7px; background: #dfdfdf;}
         .taskbar-apps { display: flex; gap: 2px; flex: 1; margin: 0 4px; overflow-x: auto; align-items: center;}
         .taskbar-item { display: inline-flex; align-items: center; gap: 4px; padding: 0 6px; height: 22px; min-width: 80px; max-width: 140px; font-weight: bold; border: 2px outset #fff; background: #c0c0c0; font-size: 11px; cursor: pointer; overflow: hidden; white-space: nowrap;}
         .taskbar-item.active { border: 2px inset #fff; background: #dfdfdf; padding-top: 2px;}
-        
-        #start-menu { display: none; position: absolute; bottom: 30px; left: 0; width: 220px; background: #c0c0c0; border: 2px outset #fff; box-shadow: 2px 2px 5px rgba(0,0,0,0.5); z-index: 99991; flex-direction: row; }
-        .start-sidebar { background: linear-gradient(to bottom, #000080, #1084d0); width: 35px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 5px; }
-        .start-sidebar span { color: white; font-weight: bold; transform: rotate(-90deg); white-space: nowrap; font-size: 18px; margin-bottom: 30px;}
-        .start-item { padding: 10px; display: flex; align-items: center; gap: 10px; font-size: 12px; cursor: pointer; }
-        .start-item:hover { background: #000080; color: white; }
+        .sys-tray { border: 2px inset #fff; padding: 0 6px; display: flex; align-items: center; gap: 4px; height: 100%; }
 
-        /* JANELAS DO WINDOWS 98 */
-        .win-classic { background: #c0c0c0; border: 2px outset #fff; box-shadow: 2px 2px 4px rgba(0,0,0,0.4); display: none; flex-direction: column; position: absolute; z-index: 10; max-height: 95dvh; min-width: 200px;}
-        .win-classic.maximized { top: 0 !important; left: 0 !important; width: 100% !important; height: calc(100dvh - 30px) !important; max-width: none !important; max-height: none !important;}
-        .title-bar { background: linear-gradient(to right, #000080, #1084d0); color: white; padding: 3px 4px; font-weight: bold; font-size: 11px; display: flex; justify-content: space-between; align-items: center; margin: 2px; cursor: default; }
+        /* START MENU */
+        #start-menu { display: none; position: absolute; bottom: 30px; left: 0; width: 250px; background: #c0c0c0; border: 2px outset #fff; box-shadow: 2px 2px 5px rgba(0,0,0,0.5); z-index: 99991; flex-direction: row; }
+        .start-sidebar { background: linear-gradient(to bottom, #000080, #1084d0); width: 35px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 5px; }
+        .start-sidebar span { color: white; font-weight: bold; transform: rotate(-90deg); white-space: nowrap; font-size: 18px; margin-bottom: 40px;}
+        .start-item { padding: 10px; display: flex; align-items: center; gap: 10px; font-size: 12px; cursor: pointer; }
+        .start-item:hover, .start-item:active { background: #000080; color: white; }
+
+        /* WINDOWS UI */
+        .win-classic { background: #c0c0c0; border: 2px outset #fff; box-shadow: 2px 2px 4px rgba(0,0,0,0.4); display: none; flex-direction: column; position: absolute; z-index: 10; max-height: 95dvh; min-width: 250px;}
+        .title-bar { background: linear-gradient(to right, #000080, #1084d0); color: white; padding: 2px 4px; font-weight: bold; font-size: 11px; display: flex; justify-content: space-between; align-items: center; margin: 2px; touch-action: none;}
         .title-bar.inactive { background: #808080; color: #c0c0c0; }
         .win-controls { display: flex; gap: 2px; }
-        .win-btn { width: 16px; height: 14px; background: #c0c0c0; color: #000; border: 2px outset #fff; font-size: 9px; font-weight: bold; display: flex; justify-content: center; align-items: center; cursor: pointer; padding-bottom: 2px; }
+        .win-btn { width: 16px; height: 14px; background: #c0c0c0; color: #000; border: 2px outset #fff; font-size: 10px; font-weight: bold; display: flex; justify-content: center; align-items: center; cursor: pointer; font-family: monospace;}
         .win-btn:active { border: 2px inset #fff; padding-top: 1px; padding-left: 1px;}
-        button.win-action { background: #c0c0c0; color: #000; border: 2px outset #fff; font-size: 11px; padding: 4px 12px; cursor: pointer; }
+        
+        button.win-action { background: #c0c0c0; color: #000; border: 2px outset #fff; font-size: 11px; padding: 4px 12px; cursor: pointer; font-family: 'Tahoma';}
         button.win-action:active { border: 2px inset #fff; padding: 5px 11px 3px 13px;}
+        input[type="text"], textarea { padding: 3px; border: 2px inset #fff; font-size: 11px; outline: none; font-family: 'Courier New', monospace;}
         .menu-bar { background: #c0c0c0; padding: 2px 6px; display: flex; gap: 10px; border-bottom: 1px solid #808080; font-size: 11px; }
 
-        /* IFRAMES DE JOGOS */
-        .game-iframe { border: 2px inset #fff; width: 100%; height: 100%; display: block; background: #000; }
+        /* APP SPECIFIC STYLES */
+        
+        /* Defrag */
+        .defrag-grid { display: grid; grid-template-columns: repeat(20, 1fr); gap: 1px; background: #fff; border: 2px inset #808080; padding: 2px; height: 150px; overflow: hidden; margin-top: 10px;}
+        .d-block { background: #fff; border: 1px solid #dfdfdf;}
+        
+        /* File Explorer */
+        .explorer-layout { display: flex; flex: 1; border: 2px inset #fff; background: #fff; margin: 2px; overflow: hidden;}
+        .explorer-tree { width: 150px; border-right: 2px inset #fff; padding: 5px; overflow-y: auto; background: #fff;}
+        .explorer-files { flex: 1; padding: 5px; overflow-y: auto; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 10px; background: #fff;}
+        
+        /* System Monitor */
+        .sysmon-graph { border: 2px inset #fff; background: #000; width: 100%; height: 100px; margin-bottom: 10px;}
+        
+        /* CLI / Terminal */
+        .cli-screen { background: #000; color: #c0c0c0; font-family: 'VT323', monospace; font-size: 16px; flex: 1; padding: 5px; overflow-y: auto; border: 2px inset #fff; margin: 2px; cursor: text;}
+        .cli-input { background: transparent; border: none; color: inherit; font-family: inherit; outline: none; flex: 1; font-size: inherit; }
 
-        /* UI DO CAMPO MINADO NATIVO (REESCRITO E BLINDADO CONTRA ERROS) */
-        .mine-header { display:flex; justify-content:space-between; background:#c0c0c0; border:2px inset #fff; padding:4px; margin-bottom:6px; }
-        .mine-lcd { background:#000; color:red; font-family:'Courier New', monospace; font-size:22px; font-weight:bold; padding:0 4px; border:1px inset #808080; }
-        .mine-face { width:26px; height:26px; border:2px outset #fff; display:flex; justify-content:center; align-items:center; cursor:pointer; font-size: 16px; background: #c0c0c0; }
-        .mine-face:active { border:2px inset #fff; }
-        .mine-grid { display: grid; border: 3px inset #fff; background: #c0c0c0; user-select: none; gap: 0; }
-        .mine-cell { width: 20px; height: 20px; background: #c0c0c0; border: 2px outset #fff; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 13px; cursor: pointer; box-sizing: border-box;}
-        .mine-cell.revealed { border: 1px solid #808080; border-right: 1px dotted #808080; border-bottom: 1px dotted #808080; background: #dfdfdf; cursor: default; }
+        /* FTP */
+        .ftp-pane { flex: 1; border: 2px inset #fff; background: #fff; padding: 2px; overflow-y: auto; height: 120px;}
+        
+        /* Email */
+        .email-list { border: 2px inset #fff; background: #fff; height: 100px; overflow-y: auto; margin-bottom: 5px;}
+        .email-item { padding: 2px 5px; cursor: pointer; border-bottom: 1px solid #dfdfdf;}
+        .email-item:hover, .email-item.active { background: #000080; color: #fff;}
 
-        /* MSN MESSENGER */
-        .msn-chat-area { flex: 1; background: #fff; border: 2px inset #808080; margin-bottom: 5px; padding: 8px; overflow-y: auto; font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 12px; color: #000; }
-        .msn-msg b { color: #0000aa; }
-        .msn-bot b { color: #aa0000; }
-
-        /* WINAMP */
-        #winamp-vis { display: flex; align-items: flex-end; gap: 2px; height: 30px; width: 100px; background: #000; padding: 2px; border: 2px inset #808080; margin-top: 5px; }
-        .vis-bar { width: 4px; background: #0f0; transition: height 0.1s; }
-
-        /* MOVIE MAKER */
-        .mm-layout { display: flex; flex: 1; gap: 5px; padding: 5px; background: #dfdfdf; }
-        .mm-left { width: 150px; background: #fff; border: 2px inset #808080; overflow-y: auto; padding: 5px; }
-        .mm-right { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #000; border: 2px inset #808080; position: relative;}
-        .mm-bottom { height: 100px; background: #fff; border: 2px inset #808080; display: flex; align-items: center; padding: 5px; gap: 5px; overflow-x: auto; margin: 0 5px 5px 5px; border-top: none;}
-        .mm-clip { width: 60px; height: 45px; background: #008080; border: 1px solid #000; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; font-size: 9px; }
     </style>
 </head>
-<body oncontextmenu="return false;">
+<body class="crt" oncontextmenu="return false;">
 
-    <!-- AUDIOS -->
+    <!-- AUDIO -->
     <audio id="snd-startup" src="https://cdn.pixabay.com/audio/2026/01/31/audio_33d02094bd.mp3"></audio>
     <audio id="snd-click" src="https://www.myinstants.com/media/sounds/mouse-click.mp3"></audio>
-    <audio id="snd-msn" src="https://www.myinstants.com/media/sounds/msn-msg.mp3"></audio>
-    <audio id="snd-msn-nudge" src="https://www.myinstants.com/media/sounds/msn-nudge.mp3"></audio>
-    <audio id="snd-chord" src="https://www.myinstants.com/media/sounds/windows-98-error.mp3"></audio>
-    <!-- MP3 do Winamp -->
-    <audio id="winamp-audio" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" loop></audio>
+    <audio id="snd-error" src="https://www.myinstants.com/media/sounds/windows-98-error.mp3"></audio>
 
-    <div id="start-btn-init" class="fullscreen" style="background: #000; z-index: 2000000; display:flex; justify-content:center; align-items:center; position:fixed; top:0; left:0; width:100%; height:100%;">
-        <button class="win-action" style="font-size: 20px; padding: 20px;" onclick="iniciarSO()">LIGAR O COMPUTADOR</button>
+    <!-- BIOS BOOT -->
+    <div id="bios-screen" class="fullscreen" onclick="startSystem()">
+        <div style="width: 100%; max-width: 600px;">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Energy_Star_logo.svg/1024px-Energy_Star_logo.svg.png" style="width: 80px; filter: grayscale(1); float: right;">
+            Award Modular BIOS v4.51PG, An Energy Star Ally<br>
+            Copyright (C) 1984-98, Award Software, Inc.<br><br>
+            Dual Intel Pentium II Processors 350MHz<br>
+            Memory Test : <span id="mem-test">0</span>K OK<br><br>
+            <div id="bios-details" style="display: none;">
+                Adaptec AHA-2940UW PCI SCSI Controller<br>
+                SCSI ID:0 SEAGATE ST34520W - Drive C: (9GB)<br>
+                SCSI ID:4 TOSHIBA CD-ROM - Drive D:<br><br>
+                Starting Windows NT Server...
+            </div>
+            <div id="boot-prompt" style="margin-top: 50px; color: yellow; cursor: pointer; text-decoration: underline;">> Clique aqui para ligar o servidor <</div>
+        </div>
     </div>
 
+    <!-- OS ENVIRONMENT -->
     <div id="os-environment">
-        <!-- ÍCONES NA ÁREA DE TRABALHO -->
+        
         <div id="desktop-area">
-            <div class="desktop-icon" onclick="abrirJanela('ie-app','Internet')"><img src="https://win98icons.alexmeub.com/icons/png/msie1-2.png"><span>Internet Explorer</span></div>
-            <div class="desktop-icon" onclick="abrirJanela('msn-app','MSN Messenger')"><img src="https://win98icons.alexmeub.com/icons/png/msn2-0.png"><span>MSN Messenger</span></div>
-            <div class="desktop-icon" onclick="abrirJanela('winamp-app','Winamp')"><img src="https://win98icons.alexmeub.com/icons/png/cd_audio_cd_a-4.png"><span>Winamp</span></div>
-            <div class="desktop-icon" onclick="abrirJanela('wmp-app','Windows Media Player')"><img src="https://win98icons.alexmeub.com/icons/png/video_file-0.png"><span>Media Player</span></div>
-            <div class="desktop-icon" onclick="abrirJanela('mm-app','Movie Maker')"><img src="https://win98icons.alexmeub.com/icons/png/movie_maker-0.png"><span>Movie Maker</span></div>
-            
-            <!-- JOGOS -->
-            <div class="desktop-icon" onclick="abrirJanela('mine-app','Campo Minado')"><img src="https://win98icons.alexmeub.com/icons/png/minesweeper-0.png"><span>Campo Minado</span></div>
-            <div class="desktop-icon" onclick="abrirJanela('doom-app','DOOM (DOS)')"><img src="https://win98icons.alexmeub.com/icons/png/console_prompt-0.png"><span>DOOM 1993</span></div>
-            <div class="desktop-icon" onclick="abrirJanela('pinball-app','3D Pinball')"><img src="https://win98icons.alexmeub.com/icons/png/joystick-0.png"><span>3D Pinball</span></div>
+            <!-- Icons -->
+            <div class="desktop-icon" ondblclick="openApp('monitor-app')" onclick="selectIcon(this)"><img src="https://win98icons.alexmeub.com/icons/png/performance-0.png"><span>System Monitor</span></div>
+            <div class="desktop-icon" ondblclick="openApp('iis-app')" onclick="selectIcon(this)"><img src="https://win98icons.alexmeub.com/icons/png/server_window-0.png"><span>IIS Server Admin</span></div>
+            <div class="desktop-icon" ondblclick="openApp('explorer-app')" onclick="selectIcon(this)"><img src="https://win98icons.alexmeub.com/icons/png/directory_explorer-5.png"><span>File Explorer</span></div>
+            <div class="desktop-icon" ondblclick="openApp('ftp-app')" onclick="selectIcon(this)"><img src="https://win98icons.alexmeub.com/icons/png/world_network_directories-1.png"><span>WS_FTP Pro</span></div>
+            <div class="desktop-icon" ondblclick="openApp('notepad-app')" onclick="selectIcon(this)"><img src="https://win98icons.alexmeub.com/icons/png/notepad-5.png"><span>Notepad</span></div>
+            <div class="desktop-icon" ondblclick="openApp('telnet-app')" onclick="selectIcon(this)"><img src="https://win98icons.alexmeub.com/icons/png/console_prompt-0.png"><span>PuTTY Telnet</span></div>
+            <div class="desktop-icon" ondblclick="openApp('browser-app')" onclick="selectIcon(this)"><img src="https://win98icons.alexmeub.com/icons/png/msie1-2.png"><span>Netscape 4.0</span></div>
+            <div class="desktop-icon" ondblclick="openApp('email-app')" onclick="selectIcon(this)"><img src="https://win98icons.alexmeub.com/icons/png/envelope_closed-0.png"><span>Outlook Express</span></div>
+            <div class="desktop-icon" ondblclick="openApp('defrag-app')" onclick="selectIcon(this)"><img src="https://win98icons.alexmeub.com/icons/png/defragment-0.png"><span>Disk Defragmenter</span></div>
+            <div class="desktop-icon" ondblclick="openApp('mysql-app')" onclick="selectIcon(this)"><img src="https://win98icons.alexmeub.com/icons/png/msdos-0.png"><span>MySQL CLI</span></div>
         </div>
 
-        <!-- ========================================================= -->
-        <!-- PROGRAMAS NOVOS: MSN, WINAMP, MEDIA PLAYER E MOVIE MAKER -->
-        <!-- ========================================================= -->
-
-        <!-- MSN MESSENGER -->
-        <div class="win-classic app-win" id="msn-app" style="top:10%; left:10%; width: 350px; height: 450px;">
-            <div class="title-bar" id="drag-msn"><div><img src="https://win98icons.alexmeub.com/icons/png/msn2-0.png" width="14"> Conversa com SmarterChild - MSN</div><div class="win-controls"><div class="win-btn" onclick="fecharJanela('msn-app')">X</div></div></div>
-            <div class="menu-bar"><u>A</u>rquivo &nbsp; <u>E</u>ditar &nbsp; <u>A</u>ções</div>
-            <div style="background:#e4eef9; padding:10px; flex:1; display:flex; flex-direction:column;">
-                <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
-                    <img src="https://win98icons.alexmeub.com/icons/png/msn3-0.png" width="40" style="border: 1px solid #ccc; background:#fff;">
-                    <div><b>SmarterChild</b> diz:<br><span style="color:#666; font-size:10px;">Estou online e pronto para conversar!</span></div>
+        <!-- APP 1: SYSTEM MONITOR -->
+        <div class="win-classic app-win" id="monitor-app" style="top:5%; left:5%; width: 350px;">
+            <div class="title-bar" id="drag-monitor">
+                <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/performance-0.png" width="14"> System Monitor</div>
+                <div class="win-controls"><div class="win-btn" onclick="closeApp('monitor-app')">X</div></div>
+            </div>
+            <div class="menu-bar"><u>F</u>ile &nbsp;&nbsp; <u>V</u>iew &nbsp;&nbsp; <u>O</u>ptions</div>
+            <div style="padding: 10px; background: #c0c0c0;">
+                <div><b>Processor Usage (%) - Dual Pentium II</b></div>
+                <canvas id="cpu-graph" class="sysmon-graph"></canvas>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>CPU: <span id="cpu-val">0</span>%</span>
+                    <span>Allocated Memory: <span id="ram-val">42</span>M / 128M</span>
                 </div>
-                <div class="msn-chat-area" id="msn-chat"></div>
-                <div style="display:flex; gap:5px; height: 50px;">
-                    <textarea id="msn-input" style="flex:1; resize:none; border:2px inset #808080; font-family:Arial;" onkeydown="if(event.key==='Enter'){event.preventDefault(); enviarMsn();}"></textarea>
-                    <div style="display:flex; flex-direction:column; gap:2px;">
-                        <button class="win-action" style="flex:1;" onclick="enviarMsn()">Enviar</button>
-                        <button class="win-action" style="font-size:9px;" onclick="chamarAtencao()">Atenção</button>
+            </div>
+        </div>
+
+        <!-- APP 2: IIS SERVER ADMIN -->
+        <div class="win-classic app-win" id="iis-app" style="top:10%; left:10%; width: 450px;">
+            <div class="title-bar" id="drag-iis">
+                <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/server_window-0.png" width="14"> Internet Information Services (IIS) 4.0</div>
+                <div class="win-controls"><div class="win-btn" onclick="closeApp('iis-app')">X</div></div>
+            </div>
+            <div style="padding: 10px;">
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <button class="win-action" onclick="toggleServer(true)">▶ Start</button>
+                    <button class="win-action" onclick="toggleServer(false)">⏹ Stop</button>
+                    <span style="align-self: center; font-weight: bold; color: green;" id="iis-status">Status: RUNNING</span>
+                </div>
+                <b>Real-Time HTTP Access Logs:</b>
+                <div id="iis-logs" style="background: #fff; border: 2px inset #fff; height: 150px; overflow-y: auto; font-family: monospace; font-size: 10px; padding: 2px;">
+                    Started IIS Web Engine...<br>
+                </div>
+            </div>
+        </div>
+
+        <!-- APP 3: FILE EXPLORER -->
+        <div class="win-classic app-win" id="explorer-app" style="top:15%; left:15%; width: 500px; height: 350px;">
+            <div class="title-bar" id="drag-explorer">
+                <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/directory_explorer-5.png" width="14"> C:\inetpub\wwwroot</div>
+                <div class="win-controls"><div class="win-btn" onclick="closeApp('explorer-app')">X</div></div>
+            </div>
+            <div class="menu-bar"><u>F</u>ile &nbsp; <u>E</u>dit &nbsp; <u>V</u>iew &nbsp; <u>H</u>elp</div>
+            <div class="explorer-layout">
+                <div class="explorer-tree">
+                    <div style="margin-bottom:2px;">[-] C:</div>
+                    <div style="margin-left: 10px; margin-bottom:2px;">[+] WINNT</div>
+                    <div style="margin-left: 10px; margin-bottom:2px;">[-] inetpub</div>
+                    <div style="margin-left: 20px; font-weight:bold; background:#000080; color:#fff;">wwwroot</div>
+                </div>
+                <div class="explorer-files">
+                    <div style="text-align:center; width: 60px;"><img src="https://win98icons.alexmeub.com/icons/png/html-0.png" width="32"><br>index.html</div>
+                    <div style="text-align:center; width: 60px;"><img src="https://win98icons.alexmeub.com/icons/png/html-0.png" width="32"><br>about.html</div>
+                    <div style="text-align:center; width: 60px;"><img src="https://win98icons.alexmeub.com/icons/png/gears-0.png" width="32"><br>form.cgi</div>
+                    <div style="text-align:center; width: 60px;"><img src="https://win98icons.alexmeub.com/icons/png/image_gif-0.png" width="32"><br>logo.gif</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- APP 4: FTP CLIENT -->
+        <div class="win-classic app-win" id="ftp-app" style="top:20%; left:20%; width: 450px;">
+            <div class="title-bar" id="drag-ftp">
+                <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/world_network_directories-1.png" width="14"> WS_FTP Pro</div>
+                <div class="win-controls"><div class="win-btn" onclick="closeApp('ftp-app')">X</div></div>
+            </div>
+            <div style="padding: 10px;">
+                <div style="display: flex; gap: 5px; margin-bottom: 5px;">
+                    Host: <input type="text" value="ftp.geocities.com" style="width: 120px;">
+                    <button class="win-action" onclick="runFTP()">Connect</button>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <div class="ftp-pane"><b>Local System</b><br>C:\projects\web<br>- index.html<br>- style.css</div>
+                    <div style="display:flex; flex-direction:column; justify-content:center; gap:5px;">
+                        <button class="win-action">--></button>
+                        <button class="win-action"><--</button>
                     </div>
+                    <div class="ftp-pane"><b>Remote System</b><br>/www/htdocs/<br><span style="color:gray;">Not connected</span></div>
+                </div>
+                <div id="ftp-log" style="background:#fff; border:2px inset #fff; height:60px; overflow-y:auto; margin-top:5px; font-family:monospace; padding:2px;">WINSOCK.DLL loaded.</div>
+            </div>
+        </div>
+
+        <!-- APP 5: NOTEPAD -->
+        <div class="win-classic app-win" id="notepad-app" style="top:25%; left:25%; width: 400px; height: 300px;">
+            <div class="title-bar" id="drag-notepad">
+                <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/notepad-5.png" width="14"> index.html - Notepad</div>
+                <div class="win-controls"><div class="win-btn" onclick="closeApp('notepad-app')">X</div></div>
+            </div>
+            <div class="menu-bar"><u>F</u>ile &nbsp; <u>E</u>dit &nbsp; <u>S</u>earch &nbsp; <u>H</u>elp</div>
+            <textarea style="flex:1; border:none; border-top: 1px solid #fff; padding:4px; resize:none;">&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;My Awesome 90s Page&lt;/title&gt;
+&lt;/head&gt;
+&lt;body bgcolor="#000000" text="#00FF00"&gt;
+    &lt;h1&gt;Welcome to my homepage!&lt;/h1&gt;
+    &lt;img src="under_construction.gif"&gt;
+&lt;/body&gt;
+&lt;/html&gt;</textarea>
+        </div>
+
+        <!-- APP 6: TELNET / SSH -->
+        <div class="win-classic app-win" id="telnet-app" style="top:5%; left:40%; width: 400px; height: 250px;">
+            <div class="title-bar" id="drag-telnet">
+                <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/console_prompt-0.png" width="14"> PuTTY (Inactive) - root@10.0.0.5</div>
+                <div class="win-controls"><div class="win-btn" onclick="closeApp('telnet-app')">X</div></div>
+            </div>
+            <div class="cli-screen" id="telnet-screen" onclick="document.getElementById('telnet-in').focus()">
+                FreeBSD 2.2.8-RELEASE (GENERIC)<br>
+                login: root<br>
+                Password: *******<br>
+                Welcome to FreeBSD!<br>
+                <div id="telnet-history"></div>
+                <div style="display:flex;">root@server:~ # <input type="text" id="telnet-in" class="cli-input" onkeydown="handleTelnet(event)" autocomplete="off"></div>
+            </div>
+        </div>
+
+        <!-- APP 7: RETRO BROWSER -->
+        <div class="win-classic app-win" id="browser-app" style="top:10%; left:30%; width: 500px; height: 400px;">
+            <div class="title-bar" id="drag-browser">
+                <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/msie1-2.png" width="14"> Netscape Navigator</div>
+                <div class="win-controls"><div class="win-btn" onclick="closeApp('browser-app')">X</div></div>
+            </div>
+            <div class="menu-bar"><u>F</u>ile &nbsp; <u>E</u>dit &nbsp; <u>V</u>iew &nbsp; <u>G</u>o &nbsp; <u>B</u>ookmarks</div>
+            <div style="background:#c0c0c0; padding:4px; display:flex; gap:10px; border-bottom: 1px solid #808080;">
+                <button class="win-action" style="font-weight:bold;">&lt; Back</button>
+                <button class="win-action" style="font-weight:bold; color:red;">X Stop</button>
+                <div style="display:flex; align-items:center; gap:4px; flex:1;">
+                    Location: <input type="text" value="http://localhost/index.html" style="flex:1;">
+                </div>
+            </div>
+            <div style="background:#000; flex:1; margin:2px; border:2px inset #fff; padding:20px; text-align:center; color:#0f0; overflow-y:auto;">
+                <h1>Welcome to my homepage!</h1>
+                <marquee scrollamount="5" style="color:yellow; font-size:18px;">Best viewed in Netscape Navigator 4.0 at 800x600 resolution!</marquee><br><br>
+                <img src="https://gifcities.org/assets/construction.gif" alt="Under Construction"><br><br>
+                <p>This site is hosted on a mighty Pentium II Server.</p>
+                <button class="win-action" style="font-family:'Times New Roman';">Sign my Guestbook</button>
+            </div>
+        </div>
+
+        <!-- APP 8: EMAIL CLIENT -->
+        <div class="win-classic app-win" id="email-app" style="top:15%; left:35%; width: 450px; height: 350px;">
+            <div class="title-bar" id="drag-email">
+                <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/envelope_closed-0.png" width="14"> Outlook Express - Inbox</div>
+                <div class="win-controls"><div class="win-btn" onclick="closeApp('email-app')">X</div></div>
+            </div>
+            <div class="menu-bar"><u>F</u>ile &nbsp; <u>E</u>dit &nbsp; <u>M</u>essage &nbsp; <u>T</u>ools</div>
+            <div style="padding: 5px; display: flex; flex-direction: column; flex: 1;">
+                <div class="email-list">
+                    <div class="email-item active" onclick="showEmail(1)">[URGENT] CRON Daemon - Disk Space Low</div>
+                    <div class="email-item" onclick="showEmail(2)">Webmaster - CGI Script Error on line 42</div>
+                    <div class="email-item" onclick="showEmail(3)">Bill G. - Welcome to Windows NT 4.0</div>
+                </div>
+                <div id="email-body" style="border: 2px inset #fff; background: #fff; flex: 1; padding: 10px; font-family: monospace; overflow-y:auto;">
+                    <b>From:</b> root@localhost<br><b>To:</b> admin@server.local<br><b>Subject:</b> Disk Space Low<br><br>
+                    Warning: Drive C: (SCSI) is at 98% capacity.<br>Please delete old IIS log files in C:\WINNT\system32\LogFiles immediately.
                 </div>
             </div>
         </div>
 
-        <!-- WINAMP 2.x CLONE -->
-        <div class="win-classic app-win" id="winamp-app" style="top:20%; left:20%; width: 280px; background: #222; border: 2px outset #555;">
-            <div class="title-bar" id="drag-winamp" style="background: linear-gradient(to right, #000, #333);"><div><img src="https://win98icons.alexmeub.com/icons/png/cd_audio_cd_a-4.png" width="14"> WINAMP</div><div class="win-controls"><div class="win-btn" onclick="fecharJanela('winamp-app')">X</div></div></div>
-            <div style="padding: 10px; color: #0f0; font-family: 'VT323', monospace;">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div style="font-size:30px; font-weight:bold; color: #0f0;" id="winamp-time">00:00</div>
-                    <div id="winamp-vis">
-                        <!-- Barras animadas via JS -->
-                    </div>
-                </div>
-                <div style="margin-top:5px; background:#000; padding:2px; font-size:14px; border:1px inset #555;">1. DJ Tiesto - Retro Mix .mp3 (128kbps)</div>
-                <div style="margin-top:10px; display:flex; justify-content:center; gap:5px;">
-                    <button style="background:#555; color:#fff; border:2px outset #777; width:30px; cursor:pointer;" onclick="controlWinamp('prev')">⏮</button>
-                    <button style="background:#555; color:#fff; border:2px outset #777; width:40px; font-weight:bold; cursor:pointer;" onclick="controlWinamp('play')">▶</button>
-                    <button style="background:#555; color:#fff; border:2px outset #777; width:30px; cursor:pointer;" onclick="controlWinamp('pause')">⏸</button>
-                    <button style="background:#555; color:#fff; border:2px outset #777; width:30px; cursor:pointer;" onclick="controlWinamp('stop')">⏹</button>
-                </div>
+        <!-- APP 9: DEFRAGMENTER -->
+        <div class="win-classic app-win" id="defrag-app" style="top:25%; left:45%; width: 350px;">
+            <div class="title-bar" id="drag-defrag">
+                <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/defragment-0.png" width="14"> Disk Defragmenter</div>
+                <div class="win-controls"><div class="win-btn" onclick="closeApp('defrag-app')">X</div></div>
             </div>
-        </div>
-
-        <!-- WINDOWS MEDIA PLAYER 6.4 -->
-        <div class="win-classic app-win" id="wmp-app" style="top:15%; left:25%; width: 400px; height: 350px;">
-            <div class="title-bar" id="drag-wmp"><div><img src="https://win98icons.alexmeub.com/icons/png/video_file-0.png" width="14"> Windows Media Player</div><div class="win-controls"><div class="win-btn" onclick="fecharJanela('wmp-app')">X</div></div></div>
-            <div class="menu-bar"><u>A</u>rquivo &nbsp; <u>E</u>xibir &nbsp; <u>R</u>eproduzir</div>
-            <div style="padding:4px; background:#c0c0c0; flex:1; display:flex; flex-direction:column;">
-                <div style="flex:1; background:#000; border:2px inset #fff; position:relative; display:flex; justify-content:center; align-items:center;">
-                    <video id="wmp-video" width="100%" height="100%" style="object-fit:cover;" src="https://archive.org/download/Windows98Screensavers/Maze.mp4" loop></video>
-                    <div id="wmp-overlay" style="position:absolute; color:#0f0; font-family:monospace; bottom:5px; left:5px; display:none;">Reproduzindo...</div>
+            <div style="padding: 10px;">
+                Defragmenting Drive C: (NTFS)<br>
+                <div style="margin-top: 5px; font-size: 10px;">
+                    <span style="color: blue;">■</span> Contiguous &nbsp;
+                    <span style="color: red;">■</span> Unmovable &nbsp;
+                    <span style="border:1px solid #000; width:8px; height:8px; display:inline-block;"></span> Free Space
                 </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
-                    <div style="display:flex; gap:2px;">
-                        <button class="win-action" style="padding: 2px 8px; font-size:14px;" onclick="wmpPlay()">▶</button>
-                        <button class="win-action" style="padding: 2px 8px; font-size:14px;" onclick="wmpPause()">⏸</button>
-                        <button class="win-action" style="padding: 2px 8px; font-size:14px;" onclick="wmpStop()">⏹</button>
-                    </div>
-                    <div style="font-family:monospace; font-size:12px;" id="wmp-time">00:00 / 00:00</div>
+                <div class="defrag-grid" id="defrag-grid"></div>
+                <div style="text-align:center; margin-top:10px;">
+                    <button class="win-action" onclick="startDefrag()">Start</button>
+                    <button class="win-action" onclick="stopDefrag()">Stop</button>
                 </div>
             </div>
         </div>
 
-        <!-- WINDOWS MOVIE MAKER (FAUX) -->
-        <div class="win-classic app-win" id="mm-app" style="top:5%; left:5%; width: 600px; height: 450px;">
-            <div class="title-bar" id="drag-mm"><div><img src="https://win98icons.alexmeub.com/icons/png/movie_maker-0.png" width="14"> Windows Movie Maker</div><div class="win-controls"><div class="win-btn" onclick="fecharJanela('mm-app')">X</div></div></div>
-            <div class="menu-bar"><u>A</u>rquivo &nbsp; <u>E</u>ditar &nbsp; <u>P</u>rojeto &nbsp; <u>C</u>lipe</div>
-            <div class="mm-layout">
-                <div class="mm-left">
-                    <b>Coleções</b>
-                    <div class="mm-clip" style="background:blue; margin-top:5px;" onclick="addClip('blue')">Cena 1</div>
-                    <div class="mm-clip" style="background:red; margin-top:5px;" onclick="addClip('red')">Cena 2</div>
-                    <div class="mm-clip" style="background:green; margin-top:5px;" onclick="addClip('green')">Cena 3</div>
-                </div>
-                <div class="mm-right" id="mm-monitor">
-                    <span style="color:#808080; font-size:20px;">[Monitor]</span>
-                </div>
+        <!-- APP 10: MYSQL DB VIEWER -->
+        <div class="win-classic app-win" id="mysql-app" style="top:30%; left:50%; width: 450px; height: 250px;">
+            <div class="title-bar" id="drag-mysql">
+                <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/msdos-0.png" width="14"> MySQL Monitor 3.22</div>
+                <div class="win-controls"><div class="win-btn" onclick="closeApp('mysql-app')">X</div></div>
             </div>
-            <div style="background:#dfdfdf; padding-left: 5px;"><b>Storyboard / Linha do Tempo:</b> <button onclick="playMovie()" style="font-size:9px;">Reproduzir Filme ▶</button></div>
-            <div class="mm-bottom" id="mm-timeline">
-                <!-- Clips entram aqui -->
+            <div class="cli-screen" id="mysql-screen" onclick="document.getElementById('mysql-in').focus()">
+                Welcome to the MySQL monitor. Commands end with ; or \g.<br>
+                Server version: 3.22.32-log<br><br>
+                Type 'help;' or '\h' for help.<br><br>
+                <div id="mysql-history"></div>
+                <div style="display:flex;">mysql> <input type="text" id="mysql-in" class="cli-input" onkeydown="handleMySQL(event)" autocomplete="off"></div>
             </div>
         </div>
 
-
-        <!-- ========================================================= -->
-        <!-- JOGOS BLINDADOS (SEM ERRO DE CONEXÃO RECUSADA)            -->
-        <!-- ========================================================= -->
-
-        <!-- CAMPO MINADO 100% NATIVO (Reescrito p/ nunca falhar) -->
-        <div class="win-classic app-win" id="mine-app" style="top:15%; left:30%; width: 170px;">
-            <div class="title-bar" id="drag-mine"><div><img src="https://win98icons.alexmeub.com/icons/png/minesweeper-0.png" width="14"> Campo Minado</div><div class="win-controls"><div class="win-btn" onclick="fecharJanela('mine-app')">X</div></div></div>
-            <div class="menu-bar"><span style="cursor:pointer;" onclick="initMinesweeper()"><u>J</u>ogo (Novo)</span></div>
-            <div style="background:#c0c0c0; padding:6px; border-left: 2px solid #fff; border-top: 2px solid #fff;">
-                <div class="mine-header">
-                    <span class="mine-lcd" id="mine-bombs">010</span>
-                    <div class="mine-face" id="mine-face" onclick="initMinesweeper()">🙂</div>
-                    <span class="mine-lcd" id="mine-timer">000</span>
-                </div>
-                <div class="mine-grid" id="mine-grid"></div>
-            </div>
-        </div>
-
-        <!-- DOOM (Usando Internet Archive Embed - Imune a bloqueios comuns) -->
-        <div class="win-classic app-win" id="doom-app" style="top:5%; left:10%; width: 660px; height: 500px;">
-            <div class="title-bar" id="drag-doom"><div><img src="https://win98icons.alexmeub.com/icons/png/console_prompt-0.png" width="14"> DOOM (MS-DOS)</div><div class="win-controls"><div class="win-btn" onclick="fecharJanela('doom-app')">X</div></div></div>
-            <div class="menu-bar"><span>Clique no botão azul "Ligar" no centro para carregar o jogo.</span></div>
-            <div style="padding: 2px; flex: 1; background: #000;">
-                <iframe id="frame-doom" data-src="https://archive.org/embed/msdos_Doom_1993" class="game-iframe" frameborder="0" sandbox="allow-scripts allow-same-origin"></iframe>
-            </div>
-        </div>
-
-        <!-- 3D PINBALL SPACE CADET (Usando Mirror Alternativo Estável) -->
-        <div class="win-classic app-win" id="pinball-app" style="top:5%; left:20%; width: 620px; height: 480px;">
-            <div class="title-bar" id="drag-pinball"><div><img src="https://win98icons.alexmeub.com/icons/png/joystick-0.png" width="14"> 3D Pinball para Windows</div><div class="win-controls"><div class="win-btn" onclick="fecharJanela('pinball-app')">X</div></div></div>
-            <div class="menu-bar"><span>Controles: Z (Esq) / (Dir) | Espaço (Lança)</span></div>
-            <div style="padding: 2px; flex: 1; background: #000;">
-                <iframe id="frame-pinball" data-src="https://alula.github.io/SpaceCadetPinball/" class="game-iframe" frameborder="0"></iframe>
-            </div>
-        </div>
-
-        <!-- MENU INICIAR -->
+        <!-- START MENU & TASKBAR -->
         <div id="start-menu">
-            <div class="start-sidebar"><span><b>Windows</b> 98</span></div>
+            <div class="start-sidebar"><span><b>Windows</b> NT Server</span></div>
             <div style="flex: 1; padding: 2px; display: flex; flex-direction: column; background: #c0c0c0;">
-                <div class="start-item" onclick="abrirJanela('ie-app', 'Internet Explorer'); closeMenu()"><img src="https://win98icons.alexmeub.com/icons/png/msie1-2.png" width="24"> Internet Explorer</div>
-                <div class="start-item" onclick="abrirJanela('msn-app', 'MSN Messenger'); closeMenu()"><img src="https://win98icons.alexmeub.com/icons/png/msn2-0.png" width="24"> MSN Messenger</div>
-                <div class="start-item" onclick="abrirJanela('winamp-app', 'Winamp'); closeMenu()"><img src="https://win98icons.alexmeub.com/icons/png/cd_audio_cd_a-4.png" width="24"> Winamp</div>
+                <div class="start-item" onclick="openApp('monitor-app')"><img src="https://win98icons.alexmeub.com/icons/png/performance-0.png" width="24"> System Monitor</div>
+                <div class="start-item" onclick="openApp('iis-app')"><img src="https://win98icons.alexmeub.com/icons/png/server_window-0.png" width="24"> IIS Manager</div>
+                <div class="start-item" onclick="openApp('explorer-app')"><img src="https://win98icons.alexmeub.com/icons/png/directory_explorer-5.png" width="24"> File Explorer</div>
                 <div style="height:2px; border-top:1px solid #808080; border-bottom:1px solid #fff; margin:2px 4px;"></div>
-                <div class="start-item" onclick="location.reload()"><img src="https://win98icons.alexmeub.com/icons/png/shut_down_cool-5.png" width="24"> Desligar...</div>
+                <div class="start-item" onclick="location.reload()"><img src="https://win98icons.alexmeub.com/icons/png/shut_down_cool-5.png" width="24"> Shut Down...</div>
             </div>
         </div>
-
         <div class="taskbar">
-            <div class="start-btn" id="start-btn" onclick="toggleMenu(event)"><img src="https://win98icons.alexmeub.com/icons/png/windows-0.png" width="16"> Iniciar</div>
+            <div class="start-btn" id="start-btn" onclick="toggleMenu(event)"><img src="https://win98icons.alexmeub.com/icons/png/windows-0.png" width="16"> Start</div>
             <div class="taskbar-apps" id="taskbar-apps"></div>
-            <div class="sys-tray"><img src="https://win98icons.alexmeub.com/icons/png/time_and_date-1.png" width="16"><span id="clock" style="margin: 0 4px;">12:00</span></div>
+            <div class="sys-tray"><span id="clock" style="margin: 0 4px;">12:00</span></div>
         </div>
     </div>
 
     <script>
         const sleep = ms => new Promise(r => setTimeout(r, ms));
-        function playSnd(id) { let s = document.getElementById(id); if(s){ s.currentTime=0; s.play().catch(()=>{}); } }
+        function playSnd(id) { let s = document.getElementById(id); if(s){ s.currentTime=0; let p = s.play(); if(p) p.catch(()=>{}); } }
         function playClick() { playSnd('snd-click'); }
 
-        async function iniciarSO() {
+        // --- BOOT SEQUENCE ---
+        document.getElementById('boot-prompt').style.display = 'none';
+        
+        async function iniciarPOST() {
             document.getElementById('start-btn-init').style.display = 'none';
-            playSnd('snd-startup'); 
-            document.getElementById('os-environment').style.display='block';
-            setInterval(() => {
-                let d = new Date();
-                document.getElementById('clock').innerText = d.getHours().toString().padStart(2, '0') + ":" + d.getMinutes().toString().padStart(2, '0');
-            }, 1000);
-            initMinesweeper(); // Inicializa o Campo Minado silenciosamente
+            playSnd('snd-startup');
+            
+            let memEl = document.getElementById('mem-test');
+            for(let i=0; i<=131072; i+=16384) { memEl.innerText = i; await sleep(80); }
+            
+            document.getElementById('bios-details').style.display = 'block';
+            await sleep(1500);
+            
+            document.getElementById('bios-screen').style.display = 'none';
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('login-pass').focus();
         }
 
+        function fazerLogon() {
+            playClick();
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('os-environment').style.display = 'block';
+            initSysMonitor();
+            initDefragGrid();
+        }
+
+        // CLOCK
+        setInterval(() => {
+            let n = new Date(); let h = n.getHours().toString().padStart(2,'0'); let m = n.getMinutes().toString().padStart(2,'0');
+            document.getElementById('clock').innerText = `${h}:${m}`;
+        }, 1000);
+
+        // --- WINDOW MANAGER ---
         let zIndex = 100, apps = {};
-        function focarJanela(id) {
+        
+        function selectIcon(el) {
+            document.querySelectorAll('.desktop-icon').forEach(i=>i.classList.remove('selected'));
+            el.classList.add('selected');
+            playClick();
+        }
+
+        function focusApp(id) {
             let w = document.getElementById(id); if(!w || w.style.display==='none') return;
             w.style.zIndex = ++zIndex;
             document.querySelectorAll('.title-bar').forEach(tb => tb.classList.add('inactive'));
@@ -276,286 +398,227 @@
             document.querySelectorAll('.taskbar-item').forEach(b => b.classList.remove('active'));
             let b = document.getElementById('task-'+id); if(b) b.classList.add('active');
         }
-        document.querySelectorAll('.app-win').forEach(w => w.addEventListener('pointerdown', ()=>focarJanela(w.id)));
+        
+        document.querySelectorAll('.app-win').forEach(w => w.addEventListener('pointerdown', ()=>focusApp(w.id)));
 
-        function abrirJanela(id, nome) {
+        function openApp(id) {
             playClick();
             let w = document.getElementById(id); 
-            if(w) {
-                if(!apps[id]) {
-                    apps[id] = true; 
-                    let icon = w.querySelector('.title-bar img')?.src || '';
-                    let btn = document.createElement('div'); btn.className='taskbar-item active'; btn.id='task-'+id;
-                    btn.innerHTML = `<img src="${icon}"><span>${nome}</span>`; 
-                    btn.onclick = ()=>alternarJanela(id);
-                    document.getElementById('taskbar-apps').appendChild(btn);
-
-                    // Carrega Iframes apenas quando abertos (Evita lentidão)
-                    let iframe = document.getElementById('frame-' + id.split('-')[0]);
-                    if(iframe && !iframe.src) iframe.src = iframe.getAttribute('data-src');
-                }
-                w.style.display='flex';
-                focarJanela(id);
+            if(!w) return;
+            
+            if(!apps[id]) {
+                apps[id] = true; 
+                let icon = w.querySelector('.title-bar img').src;
+                let name = w.querySelector('.title-bar div').innerText;
+                let btn = document.createElement('div'); btn.className='taskbar-item active'; btn.id='task-'+id;
+                btn.innerHTML = `<img src="${icon}"><span>${name}</span>`; 
+                btn.onclick = ()=>toggleApp(id);
+                document.getElementById('taskbar-apps').appendChild(btn);
             }
+            w.style.display='flex';
+            focusApp(id);
         }
 
-        function fecharJanela(id) { playClick(); document.getElementById(id).style.display='none'; if(apps[id]){ delete apps[id]; let t=document.getElementById('task-'+id); if(t)t.remove(); } }
-        function alternarJanela(id) { playClick(); let w=document.getElementById(id); if(w.style.display==='none'){w.style.display='flex'; focarJanela(id);}else{ if(w.style.zIndex == zIndex) {w.style.display='none'; let t=document.getElementById('task-'+id); if(t)t.classList.remove('active');} else { focarJanela(id); } } }
+        function closeApp(id) { 
+            playClick(); 
+            document.getElementById(id).style.display='none'; 
+            if(apps[id]){ delete apps[id]; let t=document.getElementById('task-'+id); if(t)t.remove(); } 
+        }
 
-        function toggleMenu(e) { e.stopPropagation(); playClick(); let m = document.getElementById('start-menu'); m.style.display = m.style.display === 'flex' ? 'none' : 'flex'; document.getElementById('start-btn').classList.toggle('active'); }
-        function closeMenu() { document.getElementById('start-menu').style.display = 'none'; document.getElementById('start-btn').classList.remove('active'); }
-        document.addEventListener('pointerdown', e => { if(!e.target.closest('#start-menu') && !e.target.closest('#start-btn')) closeMenu(); });
+        function toggleApp(id) { 
+            playClick(); 
+            let w=document.getElementById(id); 
+            if(w.style.display==='none'){ w.style.display='flex'; focusApp(id); } 
+            else { if(w.style.zIndex == zIndex) { w.style.display='none'; document.getElementById('task-'+id).classList.remove('active'); } else { focusApp(id); } } 
+        }
 
-        // SISTEMA ROBUSTO DE ARRASTAR JANELAS (IGNORANDO IFRAMES)
+        // DRAG WINDOWS
         document.querySelectorAll('.app-win').forEach(w => {
-            let dragZone = w.querySelector('.title-bar');
-            if(!dragZone) return;
+            let dragZone = w.querySelector('.title-bar'); if(!dragZone) return;
             let isDragging = false, startX, startY, initX, initY;
-            
             dragZone.addEventListener('pointerdown', e => {
                 if(e.target.closest('.win-controls')) return;
-                isDragging = true;
-                startX = e.clientX; startY = e.clientY;
-                initX = w.offsetLeft; initY = w.offsetTop;
+                isDragging = true; startX = e.clientX; startY = e.clientY; initX = w.offsetLeft; initY = w.offsetTop;
                 dragZone.setPointerCapture(e.pointerId);
-                document.body.classList.add('dragging'); // Bloqueia todos os iframes
             });
-            
             dragZone.addEventListener('pointermove', e => {
                 if(!isDragging) return;
-                w.style.left = (initX + e.clientX - startX) + 'px';
-                w.style.top = Math.max(0, initY + e.clientY - startY) + 'px';
+                w.style.left = (initX + e.clientX - startX) + 'px'; w.style.top = Math.max(0, initY + e.clientY - startY) + 'px';
             });
-            
-            dragZone.addEventListener('pointerup', e => {
-                isDragging = false; dragZone.releasePointerCapture(e.pointerId);
-                document.body.classList.remove('dragging'); // Libera os iframes
-            });
+            dragZone.addEventListener('pointerup', e => { isDragging = false; dragZone.releasePointerCapture(e.pointerId); });
         });
 
-        // ==========================================
-        // LÓGICA DO MSN MESSENGER
-        // ==========================================
-        function enviarMsn() {
-            let input = document.getElementById('msn-input');
-            let txt = input.value.trim();
-            if(!txt) return;
-            let chat = document.getElementById('msn-chat');
-            chat.innerHTML += `<div class="msn-msg"><b>Você diz:</b><br>${txt}</div><br>`;
-            input.value = '';
-            chat.scrollTop = chat.scrollHeight;
+        // START MENU
+        function toggleMenu(e) { playClick(); e.stopPropagation(); let m = document.getElementById('start-menu'); m.style.display = m.style.display==='flex'?'none':'flex'; document.getElementById('start-btn').classList.toggle('active'); }
+        function closeMenu() { document.getElementById('start-menu').style.display='none'; document.getElementById('start-btn').classList.remove('active'); }
+        document.addEventListener('pointerdown', e => { if(!e.target.closest('#start-menu') && !e.target.closest('.start-btn')) closeMenu(); });
 
-            // Resposta Automática do Bot
-            setTimeout(() => {
-                playSnd('snd-msn');
-                let respostas = ["Legal!", "Isso é muito 1998.", "Estou processando isso em meus 64MB de RAM.", "lol", "O MSN é a melhor coisa da internet.", "brb"];
-                let resp = respostas[Math.floor(Math.random()*respostas.length)];
-                chat.innerHTML += `<div class="msn-bot"><b>SmarterChild diz:</b><br>${resp}</div><br>`;
-                chat.scrollTop = chat.scrollHeight;
-            }, 1500 + Math.random()*2000);
+
+        // ==========================================
+        // APP LOGIC: SYSTEM MONITOR (CANVAS)
+        // ==========================================
+        let sysMonCtx, cpuHistory = new Array(100).fill(0);
+        function initSysMonitor() {
+            let canvas = document.getElementById('cpu-graph');
+            canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight;
+            sysMonCtx = canvas.getContext('2d');
+            
+            setInterval(() => {
+                // Generate fake CPU load
+                let newVal = Math.floor(Math.random() * 30);
+                if(Math.random() > 0.8) newVal += 50; // Spikes
+                if(newVal > 100) newVal = 100;
+                
+                document.getElementById('cpu-val').innerText = newVal;
+                cpuHistory.push(newVal);
+                cpuHistory.shift();
+
+                // Draw Graph
+                sysMonCtx.fillStyle = '#000';
+                sysMonCtx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Grid lines
+                sysMonCtx.strokeStyle = '#004000'; sysMonCtx.lineWidth = 1;
+                for(let i=0; i<canvas.height; i+=20) { sysMonCtx.beginPath(); sysMonCtx.moveTo(0,i); sysMonCtx.lineTo(canvas.width,i); sysMonCtx.stroke(); }
+                for(let i=0; i<canvas.width; i+=20) { sysMonCtx.beginPath(); sysMonCtx.moveTo(i,0); sysMonCtx.lineTo(i,canvas.height); sysMonCtx.stroke(); }
+
+                // Line
+                sysMonCtx.strokeStyle = '#0f0'; sysMonCtx.lineWidth = 2;
+                sysMonCtx.beginPath();
+                let step = canvas.width / 100;
+                for(let i=0; i<100; i++) {
+                    let x = i * step;
+                    let y = canvas.height - (cpuHistory[i] / 100 * canvas.height);
+                    if(i===0) sysMonCtx.moveTo(x, y); else sysMonCtx.lineTo(x, y);
+                }
+                sysMonCtx.stroke();
+            }, 500);
         }
 
-        function chamarAtencao() {
-            playSnd('snd-msn-nudge');
-            let msnWindow = document.getElementById('msn-app');
-            let chat = document.getElementById('msn-chat');
-            chat.innerHTML += `<div style="color:red; text-align:center; font-weight:bold; margin: 10px 0;">Você enviou um chamariz!</div>`;
-            chat.scrollTop = chat.scrollHeight;
+        // ==========================================
+        // APP LOGIC: IIS SERVER
+        // ==========================================
+        let iisRunning = true, iisInt;
+        function toggleServer(state) {
+            playClick();
+            iisRunning = state;
+            document.getElementById('iis-status').innerText = state ? "Status: RUNNING" : "Status: STOPPED";
+            document.getElementById('iis-status').style.color = state ? "green" : "red";
             
-            // Tremidinha na tela
-            let treme = 0;
-            let tInt = setInterval(() => {
-                msnWindow.style.transform = `translate(${Math.random()*10-5}px, ${Math.random()*10-5}px)`;
-                treme++;
-                if(treme > 10) { clearInterval(tInt); msnWindow.style.transform = `translate(0,0)`; }
+            if(state && !iisInt) {
+                iisInt = setInterval(() => {
+                    let ips = ['192.168.1.45', '200.14.55.2', '10.0.0.99', '127.0.0.1'];
+                    let files = ['/index.html', '/images/logo.gif', '/cgi-bin/form.pl', '/style.css'];
+                    let log = document.getElementById('iis-logs');
+                    let n = new Date(); let time = `${n.getHours()}:${n.getMinutes()}:${n.getSeconds()}`;
+                    log.innerHTML += `${ips[Math.floor(Math.random()*4)]} - - [${time}] "GET ${files[Math.floor(Math.random()*4)]} HTTP/1.0" 200<br>`;
+                    log.scrollTop = 9999;
+                }, 2000);
+            } else if (!state) {
+                clearInterval(iisInt); iisInt = null;
+                document.getElementById('iis-logs').innerHTML += "Server stopped gracefully.<br>";
+            }
+        }
+        toggleServer(true); // Start by default
+
+        // ==========================================
+        // APP LOGIC: FTP CLIENT
+        // ==========================================
+        async function runFTP() {
+            playClick();
+            let log = document.getElementById('ftp-log');
+            log.innerHTML = "Resolving host...<br>"; await sleep(500);
+            log.innerHTML += "Connecting to 209.1.22.4...<br>"; await sleep(800);
+            log.innerHTML += "<span style='color:blue'>220 ProFTPD 1.2.0 Server ready.</span><br>"; await sleep(400);
+            log.innerHTML += "USER anonymous<br>"; await sleep(300);
+            log.innerHTML += "<span style='color:blue'>331 Password required for anonymous.</span><br>"; await sleep(300);
+            log.innerHTML += "PASS IEUser@<br>"; await sleep(500);
+            log.innerHTML += "<span style='color:green'>230 User anonymous logged in.</span><br>";
+            log.scrollTop = 9999;
+            document.querySelectorAll('.ftp-pane')[1].innerHTML = "<b>Remote System</b><br>/www/htdocs/<br>- public_html<br>- cgi-bin";
+        }
+
+        // ==========================================
+        // APP LOGIC: TELNET
+        // ==========================================
+        function handleTelnet(e) {
+            if(e.key === 'Enter') {
+                let input = document.getElementById('telnet-in'); let cmd = input.value.trim().toLowerCase();
+                let hist = document.getElementById('telnet-history'); 
+                hist.innerHTML += `root@server:~ # ${cmd}<br>`; input.value = "";
+                let res = cmd==="ls" ? "bin  boot  dev  etc  home  lib  mnt  root  sbin  tmp  usr  var<br>" : cmd==="uname -a" ? "FreeBSD server.local 2.2.8-RELEASE FreeBSD 2.2.8-RELEASE #0: i386<br>" : cmd==="exit" ? "Connection closed by foreign host.<br>" : "Command not found.<br>";
+                hist.innerHTML += res;
+                if(cmd==="exit") setTimeout(()=>closeApp('telnet-app'), 1000);
+                document.getElementById('telnet-screen').scrollTop = 9999;
+            }
+        }
+
+        // ==========================================
+        // APP LOGIC: MYSQL CLI
+        // ==========================================
+        function handleMySQL(e) {
+            if(e.key === 'Enter') {
+                let input = document.getElementById('mysql-in'); let cmd = input.value.trim();
+                let hist = document.getElementById('mysql-history'); 
+                hist.innerHTML += `mysql> ${cmd}<br>`; input.value = "";
+                let res = "";
+                if(cmd.toUpperCase() === "SELECT * FROM USERS;") {
+                    res = "+----+----------+----------+<br>| id | username | role     |<br>+----+----------+----------+<br>|  1 | admin    | super    |<br>|  2 | webuser  | readonly |<br>+----+----------+----------+<br>2 rows in set (0.01 sec)<br>";
+                } else if(cmd.toUpperCase() === "SHOW DATABASES;") {
+                    res = "+-----------+<br>| Database  |<br>+-----------+<br>| mysql     |<br>| test      |<br>| web_data  |<br>+-----------+<br>3 rows in set (0.00 sec)<br>";
+                } else if(cmd.toLowerCase() === "exit" || cmd.toLowerCase() === "quit") {
+                    res = "Bye<br>"; setTimeout(()=>closeApp('mysql-app'), 1000);
+                } else {
+                    res = "ERROR 1064: You have an error in your SQL syntax near '" + cmd + "'.<br>";
+                }
+                hist.innerHTML += res;
+                document.getElementById('mysql-screen').scrollTop = 9999;
+            }
+        }
+
+        // ==========================================
+        // APP LOGIC: DISK DEFRAGMENTER
+        // ==========================================
+        let defragInt;
+        function initDefragGrid() {
+            let grid = document.getElementById('defrag-grid'); grid.innerHTML = '';
+            for(let i=0; i<200; i++) {
+                let block = document.createElement('div');
+                block.className = 'd-block';
+                // Randomize initial state: red (unmovable), white (free), or gray (fragmented data)
+                let rand = Math.random();
+                if(rand > 0.95) block.style.backgroundColor = 'red';
+                else if(rand > 0.6) block.style.backgroundColor = '#dfdfdf';
+                grid.appendChild(block);
+            }
+        }
+        function startDefrag() {
+            playClick(); clearInterval(defragInt);
+            let blocks = document.querySelectorAll('.d-block');
+            let current = 0;
+            defragInt = setInterval(() => {
+                if(current >= blocks.length) { clearInterval(defragInt); return playSnd('snd-tada'); }
+                if(blocks[current].style.backgroundColor !== 'red') {
+                    blocks[current].style.backgroundColor = 'blue'; // contiguous
+                }
+                current++;
             }, 50);
         }
+        function stopDefrag() { playClick(); clearInterval(defragInt); }
 
         // ==========================================
-        // LÓGICA DO WINAMP
+        // APP LOGIC: OUTLOOK EXPRESS (EMAIL)
         // ==========================================
-        let winampAudio = document.getElementById('winamp-audio');
-        let winampInt;
-        
-        function controlWinamp(action) {
-            if(action === 'play') {
-                winampAudio.play();
-                if(!winampInt) iniciarVisWinamp();
-            } else if (action === 'pause') {
-                winampAudio.pause();
-                clearInterval(winampInt); winampInt = null;
-            } else if (action === 'stop') {
-                winampAudio.pause();
-                winampAudio.currentTime = 0;
-                clearInterval(winampInt); winampInt = null;
-                document.getElementById('winamp-time').innerText = "00:00";
-                document.getElementById('winamp-vis').innerHTML = '';
-            } else if (action === 'prev') {
-                winampAudio.currentTime = 0;
-            }
-        }
-
-        function iniciarVisWinamp() {
-            let vis = document.getElementById('winamp-vis');
-            vis.innerHTML = '';
-            let bars = [];
-            for(let i=0; i<15; i++) {
-                let bar = document.createElement('div');
-                bar.className = 'vis-bar';
-                vis.appendChild(bar);
-                bars.push(bar);
-            }
-            winampInt = setInterval(() => {
-                // Atualiza o Tempo
-                let m = Math.floor(winampAudio.currentTime / 60).toString().padStart(2, '0');
-                let s = Math.floor(winampAudio.currentTime % 60).toString().padStart(2, '0');
-                document.getElementById('winamp-time').innerText = `${m}:${s}`;
-
-                // Anima as Barras
-                bars.forEach(b => {
-                    b.style.height = (Math.random() * 26 + 2) + 'px';
-                });
-            }, 100);
-        }
-
-        // ==========================================
-        // LÓGICA DO WINDOWS MEDIA PLAYER
-        // ==========================================
-        let wmpVideo = document.getElementById('wmp-video');
-        let wmpInt;
-
-        function wmpPlay() {
-            wmpVideo.play();
-            document.getElementById('wmp-overlay').style.display = 'block';
-            wmpInt = setInterval(() => {
-                let m = Math.floor(wmpVideo.currentTime / 60).toString().padStart(2, '0');
-                let s = Math.floor(wmpVideo.currentTime % 60).toString().padStart(2, '0');
-                let tm = Math.floor(wmpVideo.duration / 60 || 0).toString().padStart(2, '0');
-                let ts = Math.floor(wmpVideo.duration % 60 || 0).toString().padStart(2, '0');
-                document.getElementById('wmp-time').innerText = `${m}:${s} / ${tm}:${ts}`;
-            }, 1000);
-        }
-        function wmpPause() { wmpVideo.pause(); }
-        function wmpStop() { wmpVideo.pause(); wmpVideo.currentTime = 0; document.getElementById('wmp-overlay').style.display = 'none'; }
-
-        // ==========================================
-        // LÓGICA DO MOVIE MAKER
-        // ==========================================
-        let mmTimeline = [];
-        function addClip(color) {
+        function showEmail(id) {
             playClick();
-            let tl = document.getElementById('mm-timeline');
-            let div = document.createElement('div');
-            div.className = 'mm-clip';
-            div.style.background = color;
-            div.innerText = 'Cena';
-            tl.appendChild(div);
-            mmTimeline.push(color);
-        }
-        async function playMovie() {
-            if(mmTimeline.length === 0) return;
-            playClick();
-            let monitor = document.getElementById('mm-monitor');
-            for(let i=0; i<mmTimeline.length; i++) {
-                monitor.style.background = mmTimeline[i];
-                monitor.innerHTML = `<span style="color:white; font-size:30px;">Cena ${i+1}</span>`;
-                await sleep(1000);
-            }
-            monitor.style.background = '#000';
-            monitor.innerHTML = `<span style="color:#808080; font-size:20px;">[Fim]</span>`;
+            document.querySelectorAll('.email-item').forEach(i=>i.classList.remove('active'));
+            event.target.classList.add('active');
+            let body = document.getElementById('email-body');
+            if(id===1) body.innerHTML = "<b>From:</b> root@localhost<br><b>To:</b> admin@server.local<br><b>Subject:</b> Disk Space Low<br><br>Warning: Drive C: (SCSI) is at 98% capacity.<br>Please delete old IIS log files in C:\\WINNT\\system32\\LogFiles immediately.";
+            if(id===2) body.innerHTML = "<b>From:</b> webmaster@geocities.com<br><b>To:</b> admin@server.local<br><b>Subject:</b> CGI Script Error<br><br>The form.pl script is throwing a 500 Internal Server Error. Check permissions (chmod 755).";
+            if(id===3) body.innerHTML = "<b>From:</b> billg@microsoft.com<br><b>To:</b> admin@server.local<br><b>Subject:</b> Welcome!<br><br>Thank you for installing Windows NT Server 4.0.<br>The most robust network operating system.";
         }
 
-        // ==========================================
-        // LÓGICA DO CAMPO MINADO NATIVO E PERFEITO
-        // ==========================================
-        let mineGrid = [], cols = 8, rows = 8, bombs = 10, mineGameOver = false;
-        function initMinesweeper() {
-            let grid = document.getElementById('mine-grid');
-            grid.innerHTML = '';
-            grid.style.gridTemplateColumns = `repeat(${cols}, 20px)`;
-            mineGrid = []; mineGameOver = false;
-            document.getElementById('mine-face').innerText = '🙂';
-            document.getElementById('mine-bombs').innerText = bombs.toString().padStart(3, '0');
-            
-            for(let r=0; r<rows; r++) {
-                let row = [];
-                for(let c=0; c<cols; c++) {
-                    let cell = document.createElement('div');
-                    cell.className = 'mine-cell';
-                    let cellObj = { el: cell, bomb: false, rev: false, flag: false };
-                    row.push(cellObj);
-                    
-                    // Botão direito / Segurar para por bandeira
-                    cell.oncontextmenu = (e) => { e.preventDefault(); toggleFlag(r, c); };
-                    
-                    // Clique esquerdo
-                    cell.onpointerdown = (e) => { 
-                        if(e.button !== 0 || mineGameOver) return; 
-                        document.getElementById('mine-face').innerText = '😮';
-                    };
-                    cell.onpointerup = (e) => { 
-                        if(e.button !== 0 || mineGameOver) return;
-                        document.getElementById('mine-face').innerText = '🙂';
-                        if(!cellObj.flag) clickMine(r, c); 
-                    };
-                    grid.appendChild(cell);
-                }
-                mineGrid.push(row);
-            }
-            // Distribuir bombas
-            let b = 0;
-            while(b < bombs) {
-                let r = Math.floor(Math.random() * rows);
-                let c = Math.floor(Math.random() * cols);
-                if(!mineGrid[r][c].bomb) { mineGrid[r][c].bomb = true; b++; }
-            }
-        }
-
-        function toggleFlag(r, c) {
-            if(mineGameOver) return;
-            let cell = mineGrid[r][c];
-            if(cell.rev) return;
-            cell.flag = !cell.flag;
-            cell.el.innerText = cell.flag ? '🚩' : '';
-        }
-
-        function clickMine(r, c) {
-            if(mineGameOver || r<0 || r>=rows || c<0 || c>=cols) return;
-            let cell = mineGrid[r][c];
-            if(cell.rev || cell.flag) return;
-            
-            cell.rev = true;
-            cell.el.classList.add('revealed');
-            
-            if(cell.bomb) {
-                cell.el.innerText = '💣';
-                cell.el.style.background = 'red';
-                document.getElementById('mine-face').innerText = '😵';
-                mineGameOver = true;
-                playSnd('snd-chord');
-                // Revela as outras
-                for(let i=0; i<rows; i++) for(let j=0; j<cols; j++) 
-                    if(mineGrid[i][j].bomb && !(i===r && j===c)) { mineGrid[i][j].el.innerText = '💣'; mineGrid[i][j].el.classList.add('revealed'); }
-            } else {
-                let count = 0;
-                for(let i=-1; i<=1; i++) for(let j=-1; j<=1; j++) 
-                    if(r+i>=0 && r+i<rows && c+j>=0 && c+j<cols && mineGrid[r+i][c+j].bomb) count++;
-                
-                if(count > 0) {
-                    cell.el.innerText = count;
-                    cell.el.style.color = ['blue','green','red','darkblue','darkred','teal','black','gray'][count-1];
-                } else {
-                    for(let i=-1; i<=1; i++) for(let j=-1; j<=1; j++) if(i!==0 || j!==0) clickMine(r+i, c+j);
-                }
-                
-                // Checar vitória
-                let unrev = 0;
-                for(let i=0; i<rows; i++) for(let j=0; j<cols; j++) if(!mineGrid[i][j].rev) unrev++;
-                if(unrev === bombs) {
-                    mineGameOver = true; document.getElementById('mine-face').innerText = '😎'; playSnd('snd-tada');
-                }
-            }
-        }
     </script>
 </body>
 </html>
