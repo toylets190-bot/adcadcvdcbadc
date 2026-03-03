@@ -3,854 +3,525 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Windows NT 4.0 Server - Director's Cut</title>
+    <title>Windows NT 4.0 Server Simulator</title>
     <style>
-        /* --- MOBILE BLOCKER --- */
-        #mobile-blocker { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: #0000aa; color: #fff; font-family: 'Courier New', monospace; z-index: 99999999; padding: 20px; font-weight: bold; font-size: 16px; }
-        @media (max-width: 768px) { #mobile-blocker { display: block; } body { overflow: hidden; } }
-
-        /* --- CORE SYSTEM & FONTS --- */
+        /* --- CORE SYSTEM (SKEUOMORPHISM & PIXEL-PERFECT) --- */
         @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
-        * { box-sizing: border-box; user-select: none; font-family: 'Tahoma', 'MS Sans Serif', sans-serif; }
         
-        /* CURSORS */
-        body { background: #008080; margin: 0; height: 100dvh; width: 100vw; overflow: hidden; font-size: 11px; color: #000; cursor: url('https://win98icons.alexmeub.com/cursors/arrow.cur'), default; }
-        .loading, .loading * { cursor: url('https://win98icons.alexmeub.com/cursors/wait.cur'), wait !important; }
+        * { 
+            box-sizing: border-box; user-select: none; 
+            font-family: 'Tahoma', 'MS Sans Serif', sans-serif;
+            /* DISABLE ANTI-ALIASING FOR 90s PIXEL FEEL */
+            -webkit-font-smoothing: none; 
+            -moz-osx-font-smoothing: grayscale; 
+            font-smooth: never;
+        }
+        
+        body { background: #111; margin: 0; height: 100dvh; width: 100vw; overflow: hidden; display: flex; justify-content: center; align-items: center; perspective: 1000px; font-size: 11px; color: #000; cursor: url('https://win98icons.alexmeub.com/cursors/arrow.cur'), default; }
         input, textarea, .cli-screen { cursor: url('https://win98icons.alexmeub.com/cursors/ibeam.cur'), text; }
-
-        /* SCROLLBARS */
         ::-webkit-scrollbar { width: 16px; height: 16px; background: #dfdfdf; border-left: 1px solid #fff; border-top: 1px solid #fff; }
         ::-webkit-scrollbar-thumb { background: #c0c0c0; border: 2px outset #fff; }
 
-        /* VIGNETTE, SCANLINES & FLICKER */
-        body.crt { filter: contrast(1.15) brightness(0.9); }
-        .crt::before { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.1) 50%); background-size: 100% 3px; z-index: 999999; pointer-events: none; animation: flicker 0.15s infinite; }
-        .crt::after { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; box-shadow: inset 0 0 120px rgba(0,0,0,0.8); z-index: 999998; pointer-events: none; }
-        @keyframes flicker { 0% { opacity: 0.98; } 50% { opacity: 0.95; } 100% { opacity: 0.98; } }
+        /* CRT MONITOR */
+        #screen-container { position: relative; width: 100%; height: 100%; background: #008080; transform: rotateX(1deg) scale(1.01); transform-style: preserve-3d; overflow: hidden; box-shadow: 0 0 100px rgba(0,0,0,0.9); text-shadow: 0.5px 0 0px rgba(255,0,0,0.3), -0.5px 0 0px rgba(0,0,255,0.3); }
+        #screen-container.crt::before { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.15) 50%); background-size: 100% 3px; z-index: 999998; pointer-events: none; animation: flicker 0.15s infinite; }
+        #screen-container.crt::after { content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; box-shadow: inset 0 0 120px rgba(0,0,0,0.95); z-index: 999997; pointer-events: none; }
+        @keyframes flicker { 0% { opacity: 0.98; } 50% { opacity: 0.96; } 100% { opacity: 1.0; } }
 
-        /* SCREENS */
-        .fullscreen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000000; background: #000; color: #c0c0c0; font-family: 'VT323', monospace; font-size: 18px;}
-        #bios-screen { justify-content: flex-start; align-items: flex-start; padding: 20px; display: none;}
-        #login-screen { background: #008080; display: none; }
+        /* HARDWARE EVENTS */
+        .meltdown { animation: melt 0.1s infinite alternate; }
+        @keyframes melt { 0% { filter: blur(0px) hue-rotate(0deg); transform: rotateX(1deg) scale(1.01) skewX(0deg); } 100% { filter: blur(2px) hue-rotate(-15deg); transform: rotateX(2deg) scale(1.03) skewX(2deg); } }
         
-        /* LOGIN UI */
-        .nt-login-box { background: #c0c0c0; border: 2px outset #fff; width: 420px; padding: 2px; display: flex; flex-direction: column; box-shadow: 4px 4px 10px rgba(0,0,0,0.5); color: #000;}
-        .nt-login-header { background: linear-gradient(to right, #0000A8, #1084d0); color: white; padding: 3px 5px; font-weight: bold; font-size: 12px; font-family: Tahoma;}
+        .degauss { animation: degaussAnim 1s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+        @keyframes degaussAnim { 
+            0% { transform: scale(1) skew(0deg); filter: blur(0px) hue-rotate(0deg); }
+            10% { transform: scale(1.05) skew(10deg); filter: blur(5px) hue-rotate(90deg); }
+            20% { transform: scale(0.95) skew(-10deg); filter: blur(4px) hue-rotate(-90deg); }
+            40% { transform: scale(1.02) skew(5deg); filter: blur(2px) hue-rotate(45deg); }
+            100% { transform: scale(1) skew(0deg); filter: blur(0px) hue-rotate(0deg); }
+        }
 
-        /* DESKTOP & ICONS */
-        #os-environment { display: none; width: 100%; height: 100dvh; position: relative; overflow: hidden; }
-        #desktop-area { position: absolute; top: 0; left: 0; width: 100%; height: calc(100dvh - 30px); z-index: 1; display: flex; flex-direction: column; flex-wrap: wrap; align-content: flex-start; padding: 5px; gap: 10px;}
-        .desktop-icon { width: 75px; display: flex; flex-direction: column; align-items: center; text-align: center; z-index: 2; padding: 5px; border: 1px dotted transparent;}
+        /* SCREENS & DESKTOP */
+        .fullscreen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000000; background: #000; color: #c0c0c0; font-family: 'VT323', monospace; font-size: 18px;}
+        #bios-screen, #login-screen, #shutdown-screen { display: none; }
+        #os-environment { display: none; width: 100%; height: 100%; position: absolute; overflow: hidden; }
+        #desktop-area { position: absolute; top: 0; left: 0; width: 100%; height: calc(100% - 30px); z-index: 1; display: flex; flex-direction: column; flex-wrap: wrap; align-content: flex-start; padding: 5px; gap: 10px;}
+        
+        .desktop-icon { width: 75px; display: flex; flex-direction: column; align-items: center; text-align: center; z-index: 2; padding: 5px; border: 1px dotted transparent; cursor: pointer;}
         .desktop-icon img { width: 32px; height: 32px; margin-bottom: 4px; pointer-events: none; }
         .desktop-icon span { color: #fff; padding: 2px 4px; font-size: 11px; text-shadow: 1px 1px 0 #000; line-height: 12px; }
         .desktop-icon.selected { border: 1px dotted rgba(255,255,255,0.5); }
         .desktop-icon.selected img { filter: brightness(0.5) sepia(1) hue-rotate(200deg) saturate(5); }
         .desktop-icon.selected span { background: #0000A8; text-shadow: none; }
 
-        /* CONTEXT MENU */
-        #context-menu { display: none; position: absolute; background: #c0c0c0; border: 2px outset #fff; box-shadow: 2px 2px 5px rgba(0,0,0,0.5); z-index: 999995; flex-direction: column; min-width: 160px; padding: 2px; }
-        .context-item { padding: 5px 15px; cursor: pointer; font-size: 11px; }
-        .context-item:hover { background: #0000A8; color: #fff; }
-        .context-divider { height: 1px; border-top: 1px solid #808080; border-bottom: 1px solid #fff; margin: 2px 0; }
+        /* WINDOWS UI (SKEUOMORPHIC) */
+        .win-classic { background: #c0c0c0; border: 2px outset #fff; box-shadow: 2px 2px 4px rgba(0,0,0,0.4); display: none; flex-direction: column; position: absolute; z-index: 10; min-width: 250px; color: #000; }
+        .title-bar { background: linear-gradient(to right, #0000A8, #1084d0); color: white; padding: 2px 4px; font-weight: bold; font-size: 11px; display: flex; justify-content: space-between; align-items: center; margin: 2px; cursor: move; text-shadow: none;}
+        .title-bar.inactive { background: #808080 !important; color: #c0c0c0 !important; }
+        .win-controls { display: flex; gap: 2px; }
+        .win-btn { width: 16px; height: 14px; background: #c0c0c0; border: 2px outset #fff; font-size: 10px; font-weight: bold; display: flex; justify-content: center; align-items: center; cursor: pointer; color: #000; font-family: monospace;}
+        .win-btn:active { border: 2px inset #fff; padding-top: 1px; padding-left: 1px;}
+        button.win-action { background: #c0c0c0; border: 2px outset #fff; font-size: 11px; padding: 4px 12px; cursor: pointer; color: #000;}
+        button.win-action:active { border: 2px inset #fff; }
+        input[type="text"], input[type="password"], textarea { padding: 3px; border: 2px inset #fff; font-size: 11px; outline: none; font-family: 'Courier New', monospace;}
+        .menu-bar { background: #c0c0c0; padding: 2px 6px; display: flex; gap: 10px; border-bottom: 1px solid #808080;}
+        .menu-item { cursor: pointer; padding: 2px 4px; } .menu-item:hover { background: #0000A8; color: #fff; }
 
         /* TASKBAR & START MENU */
-        .taskbar { position: absolute; bottom: 0; width: 100%; height: 30px; background: #c0c0c0; border-top: 1px solid #dfdfdf; box-shadow: inset 0 1px 0 #fff; display: flex; justify-content: space-between; align-items: center; padding: 2px; z-index: 99999; transition: background 0.2s;}
-        .taskbar.alarm { background: #ff0000; }
-        .start-btn { font-weight: bold; display: flex; align-items: center; gap: 4px; padding: 0 6px; border: 2px outset #fff; background: #c0c0c0; height: 100%; cursor: pointer; color: #000;}
+        .taskbar { position: absolute; bottom: 0; width: 100%; height: 30px; background: #c0c0c0; border-top: 1px solid #dfdfdf; box-shadow: inset 0 1px 0 #fff; display: flex; justify-content: space-between; align-items: center; padding: 2px; z-index: 99999; }
+        .start-btn { font-weight: bold; display: flex; align-items: center; gap: 4px; padding: 0 6px; border: 2px outset #fff; background: #c0c0c0; height: 100%; cursor: pointer;}
         .start-btn:active, .start-btn.active { border: 2px inset #fff; padding: 1px 5px -1px 7px; background: #dfdfdf;}
-        .taskbar-apps { display: flex; gap: 2px; flex: 1; margin: 0 4px; overflow-x: auto; align-items: center;}
-        .taskbar-item { display: inline-flex; align-items: center; gap: 4px; padding: 0 6px; height: 22px; min-width: 80px; max-width: 140px; font-weight: bold; border: 2px outset #fff; background: #c0c0c0; font-size: 11px; cursor: pointer; overflow: hidden; white-space: nowrap; color: #000;}
-        .taskbar-item.active { border: 2px inset #fff; background: #dfdfdf; padding-top: 2px;}
-        .sys-tray { border: 2px inset #fff; padding: 0 6px; display: flex; align-items: center; gap: 4px; height: 100%; background: #c0c0c0; color: #000;}
+        .taskbar-apps { display: flex; gap: 4px; flex: 1; margin: 0 6px; align-items: center; overflow: hidden;}
+        .task-item { display: flex; align-items: center; gap: 4px; padding: 2px 6px; font-weight: bold; border: 2px outset #fff; background: #c0c0c0; height: 24px; min-width: 80px; max-width: 140px; cursor: pointer; white-space: nowrap; overflow: hidden; }
+        .task-item.active { border: 2px inset #fff; background: #dfdfdf; padding-top: 4px;}
+        .sys-tray { border: 2px inset #fff; padding: 0 6px; display: flex; align-items: center; gap: 4px; height: 100%; background: #c0c0c0;}
+        #start-menu { display: none; position: absolute; bottom: 30px; left: 0; width: 220px; background: #c0c0c0; border: 2px outset #fff; box-shadow: 2px 2px 5px rgba(0,0,0,0.5); z-index: 100000; flex-direction: row; }
+        .start-sidebar { background: linear-gradient(to bottom, #0000A8, #1084d0); width: 35px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 5px;}
+        .start-sidebar span { color: white; font-weight: bold; transform: rotate(-90deg); white-space: nowrap; font-size: 18px; margin-bottom: 40px;}
+        .start-items { flex: 1; display: flex; flex-direction: column; padding: 2px; }
+        .start-item { padding: 8px 10px; display: flex; align-items: center; gap: 10px; font-size: 11px; cursor: pointer; color: #000; }
+        .start-item:hover { background: #0000A8; color: white; }
 
-        /* HARDWARE LEDS */
-        .hw-leds { display: flex; gap: 5px; border-left: 1px solid #808080; padding-left: 5px; align-items: center;}
-        .led { width: 8px; height: 8px; border-radius: 50%; border: 1px solid #000; box-shadow: inset 1px 1px 2px rgba(255,255,255,0.5); background: #333;}
-        .led-green.on { background: #0f0; box-shadow: 0 0 5px #0f0; }
-        .led-red.on { background: #f00; box-shadow: 0 0 5px #f00; }
+        /* HARDWARE PANEL */
+        #hardware-panel { position: absolute; right: 20px; top: 30px; width: 160px; background: #e0dfd5; border: 3px outset #fff; box-shadow: 5px 5px 15px rgba(0,0,0,0.8); z-index: 999999; padding: 15px; display: flex; flex-direction: column; gap: 15px;}
+        .hw-btn { border: 2px outset #fff; background: #c0c0c0; cursor: pointer; text-align: center; padding: 8px; font-weight: bold; font-size: 11px;}
+        .hw-btn:active { border: 2px inset #fff; padding: 9px 7px 7px 9px;}
 
-        /* START MENU */
-        #start-menu { display: none; position: absolute; bottom: 30px; left: 0; width: 220px; background: #c0c0c0; border: 2px outset #fff; box-shadow: 2px 2px 5px rgba(0,0,0,0.5); z-index: 99991; flex-direction: row; color: #000;}
-        .start-sidebar { background: linear-gradient(to bottom, #0000A8, #1084d0); width: 35px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 5px; }
-        .start-sidebar span { color: white; font-weight: bold; transform: rotate(-90deg); white-space: nowrap; font-size: 18px; margin-bottom: 30px;}
-        .start-item { padding: 10px; display: flex; align-items: center; gap: 10px; font-size: 12px; cursor: pointer; }
-        .start-item:hover, .start-item:active { background: #0000A8; color: white; }
-
-        /* WINDOWS UI */
-        .win-classic { background: #c0c0c0; border: 2px outset #fff; box-shadow: 2px 2px 4px rgba(0,0,0,0.4); display: none; flex-direction: column; position: absolute; z-index: 10; max-height: 95dvh; min-width: 250px; color: #000;}
-        .win-classic.maximized { top: 0 !important; left: 0 !important; width: 100% !important; height: calc(100dvh - 30px) !important; max-width: none !important; max-height: none !important;}
-        .title-bar { background: linear-gradient(to right, #0000A8, #1084d0); color: white; padding: 2px 4px; font-weight: bold; font-size: 11px; display: flex; justify-content: space-between; align-items: center; margin: 2px; touch-action: none;}
-        .title-bar.inactive { background: #808080; color: #c0c0c0; }
-        .win-controls { display: flex; gap: 2px; }
-        .win-btn { width: 16px; height: 14px; background: #c0c0c0; color: #000; border: 2px outset #fff; font-size: 9px; font-weight: bold; display: flex; justify-content: center; align-items: center; cursor: pointer; font-family: monospace;}
-        .win-btn:active { border: 2px inset #fff; padding-top: 1px; padding-left: 1px;}
-        
-        button.win-action { background: #c0c0c0; color: #000; border: 2px outset #fff; font-size: 11px; padding: 4px 12px; cursor: pointer; font-family: 'Tahoma';}
-        button.win-action:active { border: 2px inset #fff; padding: 5px 11px 3px 13px;}
-        input[type="text"], input[type="password"], textarea { padding: 3px; border: 2px inset #fff; font-size: 11px; outline: none; font-family: 'Courier New', monospace; background: #fff;}
-        .menu-bar { background: #c0c0c0; padding: 2px 6px; display: flex; gap: 10px; border-bottom: 1px solid #808080; font-size: 11px; }
+        /* ASSISTANT (EVIL CLIPPY) */
+        #assistant { position: absolute; bottom: 40px; right: 10px; z-index: 999990; display: none; align-items: flex-end; gap: 10px; animation: popUp 0.3s ease-out; }
+        @keyframes popUp { from { transform: translateY(50px); opacity: 0;} to { transform: translateY(0); opacity: 1;} }
+        .speech-bubble { background: #ffffe1; border: 1px solid #000; padding: 10px; border-radius: 10px 10px 0 10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); max-width: 200px; position: relative;}
+        .speech-bubble::after { content: ''; position: absolute; bottom: -10px; right: 10px; border-width: 10px 10px 0 0; border-style: solid; border-color: #000 transparent transparent transparent; }
+        .speech-bubble::before { content: ''; position: absolute; bottom: -8px; right: 11px; border-width: 8px 8px 0 0; border-style: solid; border-color: #ffffe1 transparent transparent transparent; z-index: 1;}
 
         /* APP SPECIFIC UI */
-        .explorer-layout { display: flex; flex: 1; border: 2px inset #fff; background: #fff; margin: 2px; overflow: hidden;}
-        .explorer-tree { width: 150px; border-right: 2px inset #fff; padding: 5px; overflow-y: auto; background: #fff;}
-        .explorer-files { flex: 1; padding: 5px; overflow-y: auto; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 10px; background: #fff;}
-        .tree-item { padding: 2px; margin-bottom: 2px; cursor: pointer;}
-        .tree-item.active { background: #0000A8; color: #fff; font-weight: bold; }
-
-        .sysmon-graph { border: 2px inset #fff; background: #000; width: 100%; height: 100px; margin-bottom: 10px;}
         .cli-screen { background: #000; color: #c0c0c0; font-family: 'VT323', monospace; font-size: 16px; flex: 1; padding: 5px; overflow-y: auto; border: 2px inset #fff; margin: 2px;}
-        .cli-input { background: transparent; border: none; color: inherit; font-family: inherit; outline: none; flex: 1; font-size: inherit; }
-
-        .email-list { border: 2px inset #fff; background: #fff; height: 80px; overflow-y: auto; margin-bottom: 5px;}
-        .email-item { padding: 3px 5px; border-bottom: 1px solid #dfdfdf; cursor: pointer;}
-        .email-item:hover, .email-item.active { background: #0000A8; color: #fff;}
-        .email-item.unread { font-weight: bold; }
+        .cli-input { background: transparent; border: none; color: inherit; font-family: inherit; outline: none; flex: 1; font-size: inherit; width: 80%;}
         
-        .defrag-grid { display: grid; grid-template-columns: repeat(20, 1fr); gap: 1px; background: #fff; border: 2px inset #808080; padding: 2px; height: 150px; overflow: hidden; margin-top: 10px;}
-        .d-block { background: #fff; border: 1px solid #dfdfdf;}
+        .prog-loading { background: #0000A8; height: 15px; width: 0%; transition: width 0.2s; }
+        .ie-progressive { clip-path: inset(0 0 100% 0); transition: clip-path 0.5s linear; }
 
-        /* BSOD */
-        #bsod { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: #0000aa; color: #fff; font-family: 'Courier New', monospace; padding: 20px; font-size: 14px; font-weight: bold; z-index: 9999999; display: none; cursor: none;}
+        /* WINAMP WAREZ SKIN */
+        .winamp-skin { background: #111; border: 2px solid #444; color: #0f0; font-family: 'VT323', monospace; padding: 10px; width: 300px; display: flex; flex-direction: column; gap: 10px; }
+        .winamp-display { background: #000; border: 2px inset #333; padding: 5px; font-size: 16px; text-align: center; color: #0f0;}
+        .winamp-btn { background: #333; border: 2px outset #555; color: #0f0; cursor: pointer; padding: 2px 10px; font-weight: bold;}
+        .winamp-btn:active { border: 2px inset #555; }
+        
+        #bsod { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #0000aa; color: #fff; font-family: 'Courier New', monospace; padding: 20px; font-size: 14px; font-weight: bold; z-index: 9999999; display: none; cursor: none;}
     </style>
 </head>
-<body class="crt" oncontextmenu="return false;">
-
-    <div id="mobile-blocker">
-        <span style="background: #fff; color: #0000aa; padding: 0 5px;">Windows</span><br><br>
-        A fatal exception has occurred: VGA Resolution 800x600 or higher is required.<br><br>
-        * Server tools cannot be operated from a cellular device.<br>
-        * Access this terminal using a Desktop Computer.<br><br>
-        System Halted.
-    </div>
+<body oncontextmenu="return false;" ondragover="event.preventDefault();" ondrop="event.preventDefault();">
 
     <!-- AUDIO ASSETS -->
-    <audio id="snd-startup" src="https://cdn.pixabay.com/audio/2026/01/31/audio_33d02094bd.mp3"></audio>
+    <audio id="snd-startup" src="https://www.myinstants.com/media/sounds/windows-98-startup.mp3"></audio>
     <audio id="snd-click" src="https://www.myinstants.com/media/sounds/mouse-click.mp3"></audio>
     <audio id="snd-error" src="https://www.myinstants.com/media/sounds/windows-98-error.mp3"></audio>
     <audio id="snd-hdd" src="https://cdn.pixabay.com/audio/2022/03/15/audio_24a520263f.mp3"></audio>
+    <audio id="snd-beep" src="https://www.myinstants.com/media/sounds/pc-beep.mp3"></audio>
     <audio id="snd-dialup" src="https://www.myinstants.com/media/sounds/dial-up-modem-01.mp3"></audio>
+    <audio id="snd-fan" src="https://cdn.pixabay.com/audio/2022/03/09/audio_ed8aea841e.mp3" loop></audio>
+    <audio id="snd-degauss" src="https://www.myinstants.com/media/sounds/bass-drop.mp3"></audio> <!-- Placeholder for Degauss -->
+    <audio id="snd-eurodance" src="https://cdn.pixabay.com/audio/2022/01/18/audio_d0a13f69d2.mp3" loop></audio> <!-- Winamp Music -->
 
-    <div id="start-btn-init" class="fullscreen" style="background: #000; z-index: 2000000;">
-        <button class="win-action" style="font-size: 20px; padding: 20px;" onclick="iniciarPOST()">Power On Server</button>
-    </div>
-
-    <div id="bios-screen" class="fullscreen">
-        <div style="width: 100%; max-width: 600px;">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Energy_Star_logo.svg/1024px-Energy_Star_logo.svg.png" style="width: 80px; filter: grayscale(1); float: right;">
-            Award Modular BIOS v4.51PG, An Energy Star Ally<br>
-            Copyright (C) 1984-98, Award Software, Inc.<br><br>
-            Dual Intel Pentium II Processors 350MHz<br>
-            Memory Test : <span id="mem-test">0</span>K OK<br><br>
-            <div id="bios-details" style="display: none;">
-                Adaptec AHA-2940UW PCI SCSI Controller<br>
-                SCSI ID:0 SEAGATE ST34520W - Drive C: (9GB)<br>
-                SCSI ID:4 TOSHIBA CD-ROM - Drive D:<br><br>
-                Starting Windows NT Server...
-            </div>
+    <!-- HARDWARE CHASSIS PANEL -->
+    <div id="hardware-panel">
+        <div style="background: #000; color: #0f0; padding: 2px 5px; font-family: 'VT323', monospace; text-align: center; border: 2px inset #fff;">PENTIUM II SERVER</div>
+        <div class="hw-btn" onclick="degaussMonitor()" title="Removes magnetic interference">🧲 Degauss CRT</div>
+        <div class="hw-btn" style="color:#aa0000;" onclick="location.reload()">⭕ Physical Reset</div>
+        <div style="display:flex; justify-content:center; align-items:center; gap:10px; border-top:1px solid #808080; padding-top:10px;">
+            <div style="width:12px; height:12px; background:#0f0; border-radius:50%; box-shadow:0 0 8px #0f0;" title="Power LED"></div>
+            <div id="hw-hdd-led" style="width:12px; height:12px; background:#333; border-radius:50%;" title="HDD Activity"></div>
         </div>
     </div>
 
-    <div id="login-screen" class="fullscreen">
-        <div class="nt-login-box">
-            <div class="nt-login-header">Logon Information</div>
-            <div class="nt-login-content">
-                <img src="https://win98icons.alexmeub.com/icons/png/key-0.png" width="48">
-                <div style="flex: 1;">
-                    <p style="margin: 0 0 10px 0;">Enter a user name and password that is valid for this system.</p>
-                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">User name: <input type="text" value="Administrator" style="width: 150px;" readonly></div>
-                    <div style="display:flex; justify-content:space-between;">Password: <input type="password" id="login-pass" style="width: 150px;" onkeydown="if(event.key==='Enter') fazerLogon()"></div>
-                </div>
-            </div>
-            <div style="text-align: right; padding: 10px; border-top: 1px solid #808080;"><button class="win-action" style="width:80px;" onclick="fazerLogon()">OK</button></div>
-        </div>
-    </div>
+    <div id="screen-container" class="crt">
 
-    <!-- CONTEXT MENU -->
-    <div id="context-menu">
-        <div class="context-item" onclick="hideContext(); playClick()"><u>A</u>ctive Desktop</div>
-        <div class="context-item" onclick="hideContext(); location.reload()"><u>R</u>efresh</div>
-        <div class="context-divider"></div>
-        <div class="context-item" onclick="hideContext(); openApp('notepad-app')">New Text Document</div>
-        <div class="context-item" onclick="hideContext(); openApp('dos-app')">MS-DOS Prompt</div>
-        <div class="context-divider"></div>
-        <div class="context-item" onclick="hideContext(); openApp('props-app')">P<u>r</u>operties</div>
-    </div>
-
-    <div id="os-environment">
-        
-        <div id="desktop-area">
-            <div class="desktop-icon" ondblclick="openApp('explorer-app')" onclick="selectIcon(this)"><img src="https://win98icons.alexmeub.com/icons/png/computer_explorer-5.png"><span>My Computer</span></div>
-            <div class="desktop-icon" ondblclick="openApp('email-app')" onclick="selectIcon(this)"><img src="https://win98icons.alexmeub.com/icons/png/envelope_closed-0.png"><span id="desktop-mail-txt">Outlook Express</span></div>
-            <div class="desktop-icon" ondblclick="openApp('monitor-app')" onclick="selectIcon(this)"><img src="https://win98icons.alexmeub.com/icons/png/performance-0.png"><span>System Monitor</span></div>
-            <div class="desktop-icon" ondblclick="openApp('iis-app')" onclick="selectIcon(this)"><img src="https://win98icons.alexmeub.com/icons/png/server_window-0.png"><span>IIS Server Admin</span></div>
-            <div class="desktop-icon" ondblclick="openApp('browser-app')" onclick="selectIcon(this)"><img src="https://win98icons.alexmeub.com/icons/png/msie1-2.png"><span>Netscape 4.0</span></div>
-            <div class="desktop-icon" ondblclick="openApp('telnet-app')" onclick="selectIcon(this)"><img src="https://win98icons.alexmeub.com/icons/png/console_prompt-0.png"><span>PuTTY Telnet</span></div>
-            <div class="desktop-icon" ondblclick="openApp('defrag-app')" onclick="selectIcon(this)"><img src="https://win98icons.alexmeub.com/icons/png/defragment-0.png"><span>Disk Defragmenter</span></div>
+        <!-- BOOT -->
+        <div id="start-btn-init" class="fullscreen" style="background: #000; z-index: 2000000;">
+            <button class="win-action" style="font-size: 20px; padding: 20px;" onclick="iniciarPOST()">Power On</button>
         </div>
 
-        <!-- APP: DISPLAY PROPERTIES -->
-        <div class="win-classic app-win" id="props-app" style="top:20%; left:30%; width: 300px;">
-            <div class="title-bar" id="drag-props">
-                <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/display_properties-0.png" width="14"> Display Properties</div>
-                <div class="win-controls"><div class="win-btn" onclick="closeApp('props-app')">X</div></div>
+        <div id="bios-screen" class="fullscreen">
+            <div style="width: 100%; max-width: 600px;">
+                Award Modular BIOS v4.51PG, An Energy Star Ally<br>Intel Pentium II Processor 350MHz<br>
+                Memory Test : <span id="mem-test">0</span>K OK<br><br>
+                <div id="bios-details" style="display: none;">Starting Windows NT Server...</div>
             </div>
-            <div style="padding: 15px;">
-                <div style="border: 2px inset #fff; height: 120px; background: #008080; margin-bottom: 15px; position: relative;" id="props-preview">
-                    <div style="position: absolute; top: 30%; left: 30%; width: 40%; height: 40%; background: #c0c0c0; border: 1px outset #fff;">
-                        <div style="background: #0000A8; height: 5px;"></div>
+        </div>
+
+        <!-- LOGIN -->
+        <div id="login-screen" class="fullscreen" style="background: #008080;">
+            <div style="background: #c0c0c0; border: 2px outset #fff; width: 380px; padding: 2px;">
+                <div style="background: linear-gradient(to right, #0000A8, #1084d0); color: white; padding: 3px 5px; font-weight: bold;">Logon Information</div>
+                <div style="padding: 10px; display:flex;">
+                    <img src="https://win98icons.alexmeub.com/icons/png/key-0.png" width="48" style="margin-right: 15px;">
+                    <div style="flex: 1;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">User: <input type="text" value="Administrator" readonly></div>
+                        <div style="display:flex; justify-content:space-between;">Pass: <input type="password" onkeydown="if(event.key==='Enter') fazerLogon()"></div>
                     </div>
                 </div>
-                Desktop Background Color:<br>
-                <select style="width: 100%; margin-top: 5px; padding: 2px;" onchange="changeBackground(this.value)">
-                    <option value="#008080">Windows Teal (Default)</option>
-                    <option value="#000000">Hacker Black</option>
-                    <option value="#0000aa">BSOD Blue</option>
-                    <option value="#555555">Server Gray</option>
-                </select>
-            </div>
-            <div style="text-align: right; padding: 10px;"><button class="win-action" onclick="closeApp('props-app')">OK</button></div>
-        </div>
-
-        <!-- DIALOG ALERT -->
-        <div class="win-classic app-win" id="dialog-app" style="top:35%; left:30%; width:280px; z-index:9000;">
-            <div class="title-bar" id="drag-dialog"><span id="dialog-title">System Message</span><div class="win-controls"><div class="win-btn" onclick="closeApp('dialog-app')">X</div></div></div>
-            <div style="padding:15px; display:flex; gap:15px; align-items:center;">
-                <img src="https://win98icons.alexmeub.com/icons/png/msg_error-0.png" id="dialog-icon" width="32">
-                <div id="dialog-msg" style="font-size:12px; flex:1;"></div>
-            </div>
-            <div style="text-align:center; padding-bottom:10px;"><button class="win-action" style="width: 80px;" onclick="closeApp('dialog-app')">OK</button></div>
-        </div>
-
-        <!-- APP: EMAIL CLIENT (THE MISSION) -->
-        <div class="win-classic app-win" id="email-app" style="top:10%; left:15%; width: 450px; height: 350px;">
-            <div class="title-bar" id="drag-email">
-                <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/envelope_closed-0.png" width="14"> Outlook Express - Inbox</div>
-                <div class="win-controls"><div class="win-btn" onclick="toggleApp('email-app')">_</div><div class="win-btn" onclick="closeApp('email-app')">X</div></div>
-            </div>
-            <div class="menu-bar"><u>F</u>ile &nbsp; <u>E</u>dit &nbsp; <u>M</u>essage &nbsp; <u>T</u>ools</div>
-            <div style="padding: 5px; display: flex; flex-direction: column; flex: 1;">
-                <div class="email-list" id="email-list">
-                    <div class="email-item active" onclick="showEmail(1, this)" style="color:red; font-weight:bold;">[URGENT] CRON Daemon - Disk Space Low</div>
-                    <div class="email-item" onclick="showEmail(2, this)">Webmaster - CGI Script Error on line 42</div>
-                    <div class="email-item" onclick="showEmail(3, this)">Bill G. - Welcome to Windows NT 4.0</div>
-                </div>
-                <div id="email-body" style="border: 2px inset #fff; background: #fff; flex: 1; padding: 10px; font-family: monospace; overflow-y:auto;">
-                    <b>From:</b> root@localhost<br><b>To:</b> admin@server.local<br><b>Subject:</b> CRITICAL: Disk Space Low<br><br>
-                    <span style="color:red">Warning: Drive C: (SCSI) is at 99.8% capacity.</span><br>
-                    The server will crash in exactly <b id="countdown-text">120</b> seconds if space is not freed.<br><br>
-                    ACTION REQUIRED:<br>Open the <b>File Explorer (My Computer)</b>.<br>Navigate to <b>C:\WINNT\system32\LogFiles</b>.<br>Delete the heavy server logs immediately!
-                </div>
+                <div style="text-align: right; padding: 10px; border-top: 1px solid #808080;"><button class="win-action" style="width:80px;" onclick="fazerLogon()">OK</button></div>
             </div>
         </div>
 
-        <!-- APP: FILE EXPLORER -->
-        <div class="win-classic app-win" id="explorer-app" style="top:15%; left:20%; width: 500px; height: 350px;">
-            <div class="title-bar" id="drag-explorer">
-                <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/directory_explorer-5.png" width="14"> Exploring - <span id="exp-title">C:\</span></div>
-                <div class="win-controls"><div class="win-btn" onclick="toggleApp('explorer-app')">_</div><div class="win-btn" onclick="closeApp('explorer-app')">X</div></div>
-            </div>
-            <div class="menu-bar"><u>F</u>ile &nbsp; <u>E</u>dit &nbsp; <u>V</u>iew &nbsp; <u>H</u>elp</div>
-            <div class="explorer-layout">
-                <div class="explorer-tree">
-                    <div class="tree-item active" onclick="updateExplorer('C:')">[-] C:</div>
-                    <div class="tree-item" style="margin-left: 10px;" onclick="updateExplorer('WINNT')">[+] WINNT</div>
-                    <div class="tree-item" style="margin-left: 20px; display:none;" id="tree-sys32" onclick="updateExplorer('system32')">[+] system32</div>
-                    <div class="tree-item" style="margin-left: 30px; display:none; color:red; font-weight:bold;" id="tree-logs" onclick="updateExplorer('LogFiles')">LogFiles</div>
-                    <div class="tree-item" style="margin-left: 10px;" onclick="updateExplorer('inetpub')">[-] inetpub</div>
-                    <div class="tree-item" style="margin-left: 20px; display:none;" id="tree-www" onclick="updateExplorer('wwwroot')">wwwroot</div>
-                </div>
-                <div class="explorer-files" id="explorer-files">
-                    <div style="text-align:center; width: 60px; cursor:pointer;" ondblclick="updateExplorer('WINNT')"><img src="https://win98icons.alexmeub.com/icons/png/directory_closed-4.png" width="32"><br>WINNT</div>
-                    <div style="text-align:center; width: 60px; cursor:pointer;" ondblclick="updateExplorer('inetpub')"><img src="https://win98icons.alexmeub.com/icons/png/directory_closed-4.png" width="32"><br>inetpub</div>
-                </div>
-            </div>
+        <!-- EVIL CLIPPY -->
+        <div id="assistant">
+            <div class="speech-bubble" id="assistant-msg">I'm watching you...</div>
+            <img src="https://win98icons.alexmeub.com/icons/png/help_book_computer-0.png" width="48">
         </div>
 
-        <!-- APP: NOTEPAD (WEB EDITOR) -->
-        <div class="win-classic app-win" id="notepad-app" style="top:25%; left:25%; width: 400px; height: 300px;">
-            <div class="title-bar" id="drag-notepad">
-                <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/notepad-5.png" width="14"> index.html - Notepad</div>
-                <div class="win-controls"><div class="win-btn" onclick="toggleApp('notepad-app')">_</div><div class="win-btn" onclick="closeApp('notepad-app')">X</div></div>
+        <!-- DESKTOP -->
+        <div id="os-environment">
+            <div id="desktop-area">
+                <div class="desktop-icon" ondblclick="openApp('explorer-app', 'My Computer', 'computer_explorer-5.png')"><img src="https://win98icons.alexmeub.com/icons/png/computer_explorer-5.png"><span>My Computer</span></div>
+                <div class="desktop-icon" ondblclick="openApp('email-app', 'Outlook Express', 'envelope_closed-0.png')"><img src="https://win98icons.alexmeub.com/icons/png/envelope_closed-0.png"><span>Outlook</span></div>
+                <div class="desktop-icon" ondblclick="openApp('browser-app', 'Netscape', 'msie1-2.png')"><img src="https://win98icons.alexmeub.com/icons/png/msie1-2.png"><span>Netscape 4</span></div>
+                <div class="desktop-icon" ondblclick="openApp('dos-app', 'MS-DOS Prompt', 'console_prompt-0.png')"><img src="https://win98icons.alexmeub.com/icons/png/console_prompt-0.png"><span>MS-DOS</span></div>
+                <div class="desktop-icon" ondblclick="openApp('notepad-app', 'Notepad', 'notepad-5.png')"><img src="https://win98icons.alexmeub.com/icons/png/notepad-5.png"><span>Notepad</span></div>
+                <!-- Hidden Winamp Icon until unlocked -->
+                <div class="desktop-icon" id="icon-winamp" style="display:none;" ondblclick="openApp('winamp-app', 'Winamp 2.x', 'cd_audio_cd_a-2.png')"><img src="https://win98icons.alexmeub.com/icons/png/cd_audio_cd_a-2.png"><span>Winamp</span></div>
             </div>
-            <div class="menu-bar">
-                <span style="cursor:pointer; color:blue; font-weight:bold;" onclick="saveNotepad()"><u>F</u>ile (Save to localhost)</span> &nbsp; <u>E</u>dit &nbsp; <u>S</u>earch
-            </div>
-            <textarea id="notepad-input" style="flex:1; border:none; border-top: 1px solid #fff; padding:4px; resize:none;">&lt;html&gt;
-&lt;body bgcolor="#000000" text="#00FF00"&gt;
-    &lt;center&gt;
-        &lt;h1&gt;Welcome to my NT Server!&lt;/h1&gt;
-        &lt;img src="https://gifcities.org/assets/construction.gif"&gt;
-        &lt;p&gt;Change this code and click 'Save'! Then open Netscape.&lt;/p&gt;
-    &lt;/center&gt;
-&lt;/body&gt;
-&lt;/html&gt;</textarea>
-        </div>
 
-        <!-- APP: IIS SERVER ADMIN -->
-        <div class="win-classic app-win" id="iis-app" style="top:10%; left:40%; width: 450px;">
-            <div class="title-bar" id="drag-iis">
-                <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/server_window-0.png" width="14"> IIS Manager 4.0</div>
-                <div class="win-controls"><div class="win-btn" onclick="toggleApp('iis-app')">_</div><div class="win-btn" onclick="closeApp('iis-app')">X</div></div>
-            </div>
-            <div style="padding: 10px; background: #c0c0c0;">
-                <div style="display: flex; gap: 10px; margin-bottom: 10px; align-items:center; background: #fff; padding: 5px; border: 2px inset #fff;">
-                    <img src="https://win98icons.alexmeub.com/icons/png/world_network_directories-1.png" width="32">
-                    <div style="flex:1;"><b>Default Web Site (localhost)</b><br><span id="iis-status" style="color: green; font-weight: bold;">Status: RUNNING</span></div>
-                    <button class="win-action" onclick="toggleServer(true)">▶ Start</button>
-                    <button class="win-action" onclick="toggleServer(false)">⏹ Stop</button>
+            <!-- EXPLORER (VFS + DRAG AND DROP) -->
+            <div class="win-classic app-win" id="explorer-app" style="top:10%; left:10%; width: 450px; height: 350px;">
+                <div class="title-bar"><div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/directory_explorer-5.png" width="14"> Exploring - <span id="exp-title">C:\</span></div><div class="win-controls"><div class="win-btn close" onclick="closeApp('explorer-app')">X</div></div></div>
+                <div style="background:#c0c0c0; padding:4px; display:flex; gap:10px; border-bottom: 2px outset #fff;">
+                    Address: <input type="text" id="exp-path-input" value="C:\" style="flex:1;" readonly>
+                    <button class="win-action" onclick="goUpDirectory()">Go Up [..]</button>
                 </div>
-                <b>Real-Time Access Logs:</b>
-                <div id="iis-logs" style="background: #000; color:#0f0; border: 2px inset #fff; height: 120px; overflow-y: auto; font-family: 'VT323', monospace; font-size: 14px; padding: 4px;">
-                    Started IIS Web Engine on port 80...<br>
+                <div style="display: flex; flex: 1; border: 2px inset #fff; margin: 2px; background: #fff; overflow: hidden; height: calc(100% - 65px);">
+                    <div style="flex: 1; padding: 10px; display: flex; flex-wrap: wrap; gap: 15px; align-content: flex-start; overflow-y: auto;" id="explorer-files"></div>
                 </div>
             </div>
-        </div>
 
-        <!-- APP: RETRO BROWSER -->
-        <div class="win-classic app-win" id="browser-app" style="top:15%; left:30%; width: 550px; height: 450px;">
-            <div class="title-bar" id="drag-browser">
-                <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/msie1-2.png" width="14"> Netscape Navigator</div>
-                <div class="win-controls"><div class="win-btn" onclick="toggleApp('browser-app')">_</div><div class="win-btn" onclick="maximizarJanela('browser-app')">☐</div><div class="win-btn" onclick="closeApp('browser-app')">X</div></div>
+            <!-- NOTEPAD (DRAG DROP TARGET) -->
+            <div class="win-classic app-win" id="notepad-app" style="top:20%; left:20%; width: 400px; height: 300px;">
+                <div class="title-bar"><div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/notepad-5.png" width="14"> <span id="np-title">Untitled</span> - Notepad</div><div class="win-controls"><div class="win-btn close" onclick="closeApp('notepad-app')">X</div></div></div>
+                <div class="menu-bar"><span class="menu-item" style="color:blue;"><u>S</u>ave (to localhost)</span></div>
+                <textarea id="notepad-input" style="flex:1; border:none; border-top: 1px solid #fff; padding:4px; resize:none; font-size: 13px;" ondragover="event.preventDefault()" ondrop="dropToNotepad(event)">&lt;html&gt;&lt;body&gt;&lt;h1&gt;Welcome to NT Server!&lt;/h1&gt;&lt;/body&gt;&lt;/html&gt;</textarea>
             </div>
-            <div class="menu-bar"><u>F</u>ile &nbsp; <u>E</u>dit &nbsp; <u>V</u>iew &nbsp; <u>G</u>o &nbsp; <u>B</u>ookmarks</div>
-            <div style="background:#c0c0c0; padding:4px; display:flex; gap:10px; border-bottom: 2px outset #fff;">
-                <button class="win-action" style="font-weight:bold; color:red;" onclick="document.getElementById('ie-content').innerHTML='<h1>Document stopped.</h1>'; document.getElementById('snd-dialup').pause();">X Stop</button>
-                <div style="display:flex; align-items:center; gap:4px; flex:1;">
-                    Address: <input type="text" id="browser-url" value="localhost" style="flex:1; font-size: 13px;" onkeydown="if(event.key==='Enter') browseWeb()">
+
+            <!-- OUTLOOK (SERIAL KEY) -->
+            <div class="win-classic app-win" id="email-app" style="top:15%; left:35%; width: 400px; height: 300px;">
+                <div class="title-bar"><div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/envelope_closed-0.png" width="14"> Outlook Express</div><div class="win-controls"><div class="win-btn close" onclick="closeApp('email-app')">X</div></div></div>
+                <div style="display:flex; flex-direction:column; flex:1; padding: 2px;">
+                    <div style="background: #fff; border: 2px inset #fff; height: 100px; overflow-y:auto; cursor:pointer;">
+                        <div style="padding:4px; border-bottom:1px solid #ccc; font-weight:bold; background:#0000A8; color:#fff;">From: Razor1911 - RE: Winamp Serial</div>
+                        <div style="padding:4px; border-bottom:1px solid #ccc;">From: Bill Gates - Welcome to NT</div>
+                    </div>
+                    <div style="background: #fff; border: 2px inset #fff; flex:1; padding: 10px; margin-top:2px;">
+                        <b>Subject: Winamp Serial</b><br><br>Here is the code you requested to unlock the warez:<br><br><span style="color:red; font-weight:bold;">1337-H4X0R-99</span><br><br>Don't share this with the feds.
+                    </div>
+                </div>
+            </div>
+
+            <!-- INSTALLER (SERIAL PROMPT) -->
+            <div class="win-classic app-win" id="install-app" style="top:30%; left:30%; width: 300px;">
+                <div class="title-bar"><div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/program_manager-0.png" width="14"> Winamp Setup</div><div class="win-controls"><div class="win-btn close" onclick="closeApp('install-app')">X</div></div></div>
+                <div style="padding: 15px;">
+                    Please enter your 13-digit Serial Key to install Winamp.<br><br>
+                    <input type="text" id="serial-input" style="width:100%; font-size:14px; text-align:center; font-weight:bold;">
+                    <div style="text-align:right; margin-top:15px;"><button class="win-action" onclick="checkSerial()">Install</button></div>
+                </div>
+            </div>
+
+            <!-- WINAMP WAREZ -->
+            <div class="win-classic app-win" id="winamp-app" style="top:20%; left:40%; background:transparent; border:none; box-shadow:none;">
+                <div class="title-bar" style="cursor:move;"><div style="display:flex; align-items:center; gap:4px;">Winamp 2.x</div><div class="win-controls"><div class="win-btn close" onclick="closeApp('winamp-app'); document.getElementById('snd-eurodance').pause();">X</div></div></div>
+                <div class="winamp-skin">
+                    <div class="winamp-display">
+                        <marquee scrollamount="3">DJ RAZOR - SANDSTORM (CRACKED) . MP3 - 64KBPS</marquee>
+                        <div style="font-size: 24px; color: #ff0; margin-top: 5px;" id="winamp-time">00:00</div>
+                    </div>
+                    <div style="display:flex; gap:5px; justify-content:center;">
+                        <button class="winamp-btn" onclick="playSnd('snd-eurodance')">PLAY</button>
+                        <button class="winamp-btn" onclick="document.getElementById('snd-eurodance').pause()">PAUSE</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NETSCAPE (PROGRESSIVE LOAD) -->
+            <div class="win-classic app-win" id="browser-app" style="top:15%; left:25%; width: 500px; height: 400px;">
+                <div class="title-bar"><div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/msie1-2.png" width="14"> Netscape Navigator</div><div class="win-controls"><div class="win-btn close" onclick="closeApp('browser-app')">X</div></div></div>
+                <div style="background:#c0c0c0; padding:4px; display:flex; gap:10px; border-bottom: 2px outset #fff;">
+                    Address: <input type="text" id="browser-url" value="localhost" style="flex:1;" onkeydown="if(event.key==='Enter') browseWeb()">
                     <button class="win-action" onclick="browseWeb()">Go</button>
                 </div>
-            </div>
-            <div id="ie-content" style="background:#fff; flex:1; margin:2px; border:2px inset #808080; padding:10px; overflow-y:auto; color: #000;">
-                <h2>Welcome to Netscape!</h2>
-                Type <b>localhost</b> to view your server, or try <b>google.com</b>, <b>altavista.com</b>, or <b>area51.geocities.com</b>.
-            </div>
-        </div>
-
-        <!-- APP: SYSTEM MONITOR -->
-        <div class="win-classic app-win" id="monitor-app" style="top:35%; left:5%; width: 350px;">
-            <div class="title-bar" id="drag-monitor">
-                <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/performance-0.png" width="14"> System Monitor</div>
-                <div class="win-controls"><div class="win-btn" onclick="toggleApp('monitor-app')">_</div><div class="win-btn" onclick="closeApp('monitor-app')">X</div></div>
-            </div>
-            <div style="padding: 10px; background: #c0c0c0;">
-                <div><b>Processor Usage (%) - Pentium II</b></div>
-                <canvas id="cpu-graph" class="sysmon-graph"></canvas>
-                <div style="display: flex; justify-content: space-between;">
-                    <span>CPU: <span id="cpu-val" style="color:green; font-weight:bold;">0</span>%</span>
-                    <span>RAM: <span id="ram-val-text">42M / 128M</span></span>
+                <div style="padding: 2px; background:#c0c0c0; border-bottom: 1px solid #808080;" id="dialup-ui">Status: Ready.</div>
+                <div style="background:#fff; flex:1; margin:2px; border:2px inset #808080; padding:10px; overflow:hidden; position:relative;">
+                    <div id="ie-content" style="color: #000; height:100%;">
+                        <h2>Welcome to Netscape!</h2>Type <b>localhost</b> to surf the World Wide Web.
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- APP: TELNET / SSH -->
-        <div class="win-classic app-win" id="telnet-app" style="top:25%; left:45%; width: 400px; height: 250px;">
-            <div class="title-bar" id="drag-telnet">
-                <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/console_prompt-0.png" width="14"> PuTTY - root@unix</div>
-                <div class="win-controls"><div class="win-btn" onclick="toggleApp('telnet-app')">_</div><div class="win-btn" onclick="closeApp('telnet-app')">X</div></div>
-            </div>
-            <div class="cli-screen" id="telnet-screen" onclick="document.getElementById('telnet-in').focus()">
-                FreeBSD 2.2.8-RELEASE<br>login: root<br>Welcome to FreeBSD!<br>
-                <div id="telnet-history"></div>
-                <div style="display:flex;">root@unix:~ # <input type="text" id="telnet-in" class="cli-input" onkeydown="handleTelnet(event)" autocomplete="off"></div>
-            </div>
-        </div>
-
-        <!-- APP: MS-DOS -->
-        <div class="win-classic app-win" id="dos-app" style="top:15%; left:40%; width: 420px; height: 280px;">
-            <div class="title-bar" id="drag-dos">
-                <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/console_prompt-0.png" width="14"> MS-DOS Prompt</div>
-                <div class="win-controls"><div class="win-btn" onclick="toggleApp('dos-app')">_</div><div class="win-btn" onclick="closeApp('dos-app')">X</div></div>
-            </div>
-            <div class="cli-screen" id="dos-screen" onclick="document.getElementById('dos-in').focus()">
-                Microsoft(R) Windows NT(TM)<br>(C) Copyright 1985-1998 Microsoft Corp.<br>Type 'help' for commands.<br><br>
-                <div id="dos-history"></div>
-                <div style="display:flex;">C:\&gt;<input type="text" id="dos-in" class="cli-input" onkeydown="handleDOS(event)" autocomplete="off"></div>
-            </div>
-        </div>
-
-        <!-- APP: DEFRAG -->
-        <div class="win-classic app-win" id="defrag-app" style="top:45%; left:45%; width: 350px;">
-            <div class="title-bar" id="drag-defrag">
-                <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/defragment-0.png" width="14"> Disk Defragmenter</div>
-                <div class="win-controls"><div class="win-btn" onclick="toggleApp('defrag-app')">_</div><div class="win-btn" onclick="closeApp('defrag-app')">X</div></div>
-            </div>
-            <div style="padding: 10px;">
-                Defragmenting Drive C:<br>
-                <div class="defrag-grid" id="defrag-grid"></div>
-                <div style="text-align:center; margin-top:10px;">
-                    <button class="win-action" onclick="startDefrag()">Start</button>
-                    <button class="win-action" onclick="stopDefrag()">Stop</button>
+            <!-- MS-DOS HACKER TERMINAL -->
+            <div class="win-classic app-win" id="dos-app" style="top:40%; left:35%; width: 450px; height: 250px;">
+                <div class="title-bar"><div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/console_prompt-0.png" width="14"> MS-DOS Prompt</div><div class="win-controls"><div class="win-btn close" onclick="closeApp('dos-app')">X</div></div></div>
+                <div class="cli-screen" id="dos-screen" onclick="document.getElementById('dos-in').focus()">
+                    Microsoft(R) Windows NT(TM)<br>Type 'help' for commands.<br><br>
+                    <div id="dos-history"></div>
+                    <div style="display:flex;" id="dos-input-line">C:\&gt;<input type="text" id="dos-in" class="cli-input" onkeydown="handleDOS(event)" autocomplete="off"></div>
                 </div>
             </div>
-        </div>
 
-        <!-- APP: NORTON ANTIVIRUS -->
-        <div class="win-classic app-win" id="av-app" style="top:30%; left:40%; width: 400px;">
-            <div class="title-bar" id="drag-av">
-                <div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/security_lock-0.png" width="14"> Norton AntiVirus 2000</div>
-                <div class="win-controls"><div class="win-btn" onclick="closeApp('av-app')">X</div></div>
-            </div>
-            <div style="padding: 15px; text-align:center;">
-                <img src="https://win98icons.alexmeub.com/icons/png/security_lock-0.png" width="48"><br>
-                <b style="color:red; font-size: 14px;" id="av-status">System At Risk!</b><br><br>
-                Scanning Drive C: ...<br>
-                <div class="progress-container"><div class="progress-block" id="av-bar" style="width:0%; background:green; display:block;"></div></div>
-                <button class="win-action" style="margin-top:10px; padding: 10px;" onclick="runAV()">Start Scan & Clean</button>
-            </div>
-        </div>
-
-        <!-- START MENU & TASKBAR -->
-        <div id="start-menu">
-            <div class="start-sidebar"><span><b>Windows</b> NT</span></div>
-            <div style="flex: 1; padding: 2px; display: flex; flex-direction: column; background: #c0c0c0;">
-                <div class="start-item" onclick="openApp('monitor-app')"><img src="https://win98icons.alexmeub.com/icons/png/performance-0.png" width="24"> System Monitor</div>
-                <div class="start-item" onclick="openApp('iis-app')"><img src="https://win98icons.alexmeub.com/icons/png/server_window-0.png" width="24"> IIS Manager</div>
-                <div class="start-item" onclick="openApp('explorer-app')"><img src="https://win98icons.alexmeub.com/icons/png/directory_explorer-5.png" width="24"> File Explorer</div>
-                <div class="start-item" onclick="openApp('dos-app')"><img src="https://win98icons.alexmeub.com/icons/png/console_prompt-0.png" width="24"> MS-DOS Prompt</div>
-                <div style="height:2px; border-top:1px solid #808080; border-bottom:1px solid #fff; margin:2px 4px;"></div>
-                <div class="start-item" onclick="location.reload()"><img src="https://win98icons.alexmeub.com/icons/png/shut_down_cool-5.png" width="24"> Shut Down...</div>
-            </div>
-        </div>
-        <div class="taskbar" id="taskbar">
-            <div class="start-btn" id="start-btn" onclick="toggleMenu(event)"><img src="https://win98icons.alexmeub.com/icons/png/windows-0.png" width="16"> Start</div>
-            <div class="taskbar-apps" id="taskbar-apps"></div>
-            <div class="sys-tray">
-                <div class="hw-leds">
-                    <div class="led led-green on"></div>
-                    <div class="led led-red" id="led-hdd"></div>
+            <!-- START MENU & TASKBAR -->
+            <div id="start-menu">
+                <div class="start-sidebar"><span>Windows NT Server</span></div>
+                <div class="start-items">
+                    <div class="start-item" onclick="openApp('explorer-app', 'Explorer', 'directory_explorer-5.png')"><img src="https://win98icons.alexmeub.com/icons/png/directory_explorer-5.png" width="24"> Programs</div>
+                    <div class="start-item" onclick="shutDown()"><img src="https://win98icons.alexmeub.com/icons/png/shut_down_cool-0.png" width="24"> <u>S</u>hut Down...</div>
                 </div>
-                <span id="clock" style="margin: 0 4px;">12:00</span>
+            </div>
+            <div class="taskbar" id="taskbar">
+                <div class="start-btn" id="start-btn" onclick="toggleStartMenu(event)"><img src="https://win98icons.alexmeub.com/icons/png/windows-0.png" width="16"> Start</div>
+                <div class="taskbar-apps" id="taskbar-apps"></div>
+                <div class="sys-tray"><span id="clock" style="margin: 0 4px; font-weight:bold;">12:00</span></div>
             </div>
         </div>
-    </div>
 
-    <!-- BSOD -->
-    <div id="bsod" onclick="location.reload()">
-        <span style="background: #fff; color: #0000aa; padding: 0 5px; font-weight: bold;">Windows</span><br><br>
-        A fatal exception 0E has occurred at <span id="bsod-code">0137:BFF9B3D4</span>.<br>
-        <span id="bsod-reason">The current application will be terminated.</span><br><br>
-        * Press any key to terminate the application.<br>
-        * Press CTRL+ALT+DEL to restart your computer. You will lose any unsaved information.<br><br>
-        <div style="text-align: center; margin-top: 40px; animation: blinker 1s infinite;">Press any key or click to continue _</div>
+        <!-- SHUTDOWN SCREEN -->
+        <div id="shutdown-screen" class="fullscreen" style="background: #e66000; color:#000; text-shadow:none;">
+            <h2>It is now safe to turn off your computer.</h2>
+            <button onclick="location.reload()" style="padding: 10px; margin-top: 20px; font-family: Tahoma; cursor:pointer;">Restart</button>
+        </div>
     </div>
 
     <script>
-        // --- AUDIO & HARDWARE SIMULATION ---
         const sleep = ms => new Promise(r => setTimeout(r, ms));
-        function playSnd(id) { let s = document.getElementById(id); if(s){ s.currentTime=0; let p = s.play(); if(p) p.catch(()=>{}); } }
-        function playClick() { playSnd('snd-click'); }
+        let apps = {}; let zIndex = 100; let cpuUsage = 5; let clippyDead = false;
         
-        function triggerHDD() {
-            let led = document.getElementById('led-hdd');
-            led.classList.add('on');
-            playSnd('snd-hdd');
-            setTimeout(() => led.classList.remove('on'), 150);
+        // --- VIRTUAL FILE SYSTEM (WITH NFO CONTENT) ---
+        let nfoArt = `  ___   _   _______  ___  _____ \n |__ \\ / | / /__  / / _ \\|__  / \n __/ / | |/ /  / / | | | | / /  \n/ __/  | | /  / /__| |_| |/ /__ \n\\____| |_|/  /____/ \\___//____/ \n\nCracked by: The Phantom\nInstall with Serial: 1337-H4X0R-99\nEnjoy Winamp!`;
+        
+        let vfs = {
+            "C:": {
+                "WINNT": { "system32": { "LogFiles": { "access.log": {type:"txt", data:"Log started..."} } } },
+                "inetpub": { "wwwroot": { "index.html": {type:"html", data:"<html><body>Server Works</body></html>"} } },
+                "Downloads": {
+                    "RAZOR1911.nfo": {type:"nfo", data: nfoArt},
+                    "winamp_setup.exe": {type:"exe", action:"install"}
+                }
+            }
+        };
+        let currentPath = "C:";
+
+        // --- AUDIO & HARDWARE ---
+        function playSnd(id) { let s = document.getElementById(id); if(s){ s.currentTime=0; s.play().catch(()=>{}); } }
+        function triggerHDD() { let led = document.getElementById('hw-hdd-led'); led.style.background = '#f00'; setTimeout(() => led.style.background = '#333', 100); playSnd('snd-hdd'); }
+        
+        function degaussMonitor() {
+            playSnd('snd-degauss');
+            let scr = document.getElementById('screen-container');
+            scr.classList.remove('degauss'); void scr.offsetWidth; scr.classList.add('degauss');
         }
 
-        // Logic triggers for HDD sound (avoid spamming on every click)
-        document.addEventListener('click', (e) => { 
-            if(e.target.tagName === 'BUTTON' || e.target.classList.contains('desktop-icon') || e.target.classList.contains('tree-item')) {
-                triggerHDD(); 
-            }
-        });
-
-        function triggerBSOD(reason, code="0137:BFF9B3D4") {
+        // --- EVIL CLIPPY ASSISTANT ---
+        let clippyTimer;
+        function triggerClippy(msg, duration = 6000) {
+            if(clippyDead) return;
             playSnd('snd-error');
-            document.getElementById('os-environment').style.display = 'none';
-            document.getElementById('bsod-reason').innerText = reason;
-            document.getElementById('bsod-code').innerText = code;
-            document.getElementById('bsod').style.display = 'block';
-            document.body.style.cursor = "none";
+            let ast = document.getElementById('assistant');
+            document.getElementById('assistant-msg').innerText = msg;
+            ast.style.display = 'flex';
+            clearTimeout(clippyTimer);
+            clippyTimer = setTimeout(() => ast.style.display = 'none', duration);
         }
 
-        function showDialog(title, msg, isError = false) {
-            playSnd(isError ? 'snd-error' : 'snd-click');
-            document.getElementById('dialog-title').innerText = title;
-            document.getElementById('dialog-msg').innerText = msg;
-            let icon = document.getElementById('dialog-icon');
-            icon.src = isError ? 'https://win98icons.alexmeub.com/icons/png/msg_error-0.png' : 'https://win98icons.alexmeub.com/icons/png/msg_information-0.png';
-            openApp('dialog-app');
-        }
-
-        // --- CONTEXT MENU ---
-        function hideContext() { document.getElementById('context-menu').style.display = 'none'; }
-        document.addEventListener('contextmenu', e => {
-            if(e.target.id === 'desktop-area' || e.target.closest('#desktop-area')) {
-                if(e.target.closest('.desktop-icon') || e.target.closest('.app-win')) return;
-                e.preventDefault();
-                let menu = document.getElementById('context-menu');
-                menu.style.display = 'flex'; menu.style.left = e.clientX + 'px'; menu.style.top = e.clientY + 'px';
+        // --- WINDOW DRAGGING & FOCUS (SKEUOMORPHIC) ---
+        let dragWin = null, offX = 0, offY = 0;
+        document.addEventListener('mousedown', (e) => {
+            if(e.target.tagName === 'BUTTON' || e.target.classList.contains('desktop-icon')) triggerHDD();
+            let tb = e.target.closest('.title-bar');
+            if(tb && !e.target.closest('.win-controls')) {
+                dragWin = tb.closest('.app-win');
+                let rect = dragWin.getBoundingClientRect();
+                offX = e.clientX - rect.left; offY = e.clientY - rect.top;
+                focusApp(dragWin.id);
             }
         });
-        document.addEventListener('click', hideContext);
-
-        // --- DISPLAY PROPERTIES (BG CHANGE) ---
-        function changeBackground(color) {
-            document.getElementById('os-environment').style.background = color;
-            document.getElementById('props-preview').style.background = color;
-        }
-
-        // --- THE MISSION (DISK FULL) & HACKER EVENT ---
-        let missionActive = false;
-        let logsDeleted = false;
-        let missionTimer;
-        let countdown = 120;
-        let globalTimer = 0;
-        let diskFullLevel = 0; 
-        let isHacked = false;
-
-        function fazerLogon() {
-            playClick();
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('os-environment').style.display = 'block';
-            
-            initSysMonitor();
-            initDefragGrid();
-            
-            setTimeout(() => { 
-                openApp('email-app'); 
-                playSnd('snd-error');
-                missionActive = true;
-                missionTimer = setInterval(() => {
-                    countdown--;
-                    let txt = document.getElementById('countdown-text');
-                    if(txt) txt.innerText = countdown;
-                    
-                    if(countdown === 30) {
-                        document.getElementById('taskbar').classList.add('alarm');
-                        playSnd('snd-error');
-                    }
-                    if(countdown <= 0) {
-                        clearInterval(missionTimer);
-                        triggerBSOD("CRITICAL_ERROR: DISK_FULL_SYSTEM_HALT", "0x0000007A");
-                    }
-                }, 1000);
-            }, 1000);
-
-            // Global lifecycle
-            setInterval(() => {
-                globalTimer++;
-                if(globalTimer === 60 && !logsDeleted) diskFullLevel = 1;
-                if(globalTimer === 90 && !logsDeleted) {
-                    diskFullLevel = 2; toggleServer(false);
-                    showDialog("IIS Critical Error", "IIS Web Engine stopped unexpectedly due to lack of disk space.", true);
-                }
-                
-                // Hacker Event
-                if(globalTimer > 40 && Math.random() < 0.02 && !isHacked) {
-                    isHacked = true; hackerAttack();
-                }
-            }, 1000);
-        }
-
-        // --- WINDOW MANAGER ---
-        let zIndex = 100, apps = {};
-        
-        function selectIcon(el) { document.querySelectorAll('.desktop-icon').forEach(i=>i.classList.remove('selected')); el.classList.add('selected'); playClick(); }
+        document.addEventListener('mousemove', (e) => {
+            if(dragWin) {
+                let newX = e.clientX - offX; let newY = e.clientY - offY;
+                if(newY < 0) newY = 0; if(newY > window.innerHeight - 30) newY = window.innerHeight - 30;
+                dragWin.style.left = newX + 'px'; dragWin.style.top = newY + 'px';
+            }
+        });
+        document.addEventListener('mouseup', () => dragWin = null);
 
         function focusApp(id) {
-            let w = document.getElementById(id); if(!w || w.style.display==='none') return;
+            let w = document.getElementById(id); if(!w) return;
             w.style.zIndex = ++zIndex;
+            // ENFORCE SKEUOMORPHIC FOCUS: Only active window has blue bar
             document.querySelectorAll('.title-bar').forEach(tb => tb.classList.add('inactive'));
             w.querySelector('.title-bar').classList.remove('inactive');
-            document.querySelectorAll('.taskbar-item').forEach(b => b.classList.remove('active'));
-            let b = document.getElementById('task-'+id); if(b) b.classList.add('active');
+            document.querySelectorAll('.task-item').forEach(ti => ti.classList.remove('active'));
+            let tb = document.getElementById('task-'+id); if(tb) tb.classList.add('active');
         }
-        
-        document.querySelectorAll('.app-win').forEach(w => w.addEventListener('mousedown', () => focusApp(w.id)));
 
-        function openApp(id) {
-            playClick(); triggerHDD();
-            let w = document.getElementById(id); if(!w) return;
-            if(!apps[id]) {
+        function openApp(id, title="App", icon="windows-0.png") { 
+            triggerHDD(); closeStartMenu(); let w = document.getElementById(id); if(!w) return;
+            if(!apps[id]) { 
                 apps[id] = true; 
-                let icon = w.querySelector('.title-bar img').src;
-                let name = w.querySelector('.title-bar div') ? w.querySelector('.title-bar div').innerText : "App";
-                let btn = document.createElement('div'); btn.className='taskbar-item active'; btn.id='task-'+id;
-                btn.innerHTML = `<img src="${icon}"><span>${name}</span>`; btn.onclick = ()=>toggleApp(id);
-                document.getElementById('taskbar-apps').appendChild(btn);
+                let tsk = document.createElement('div'); tsk.className = 'task-item active'; tsk.id = 'task-'+id;
+                tsk.innerHTML = `<img src="https://win98icons.alexmeub.com/icons/png/${icon}" width="14"> ${title}`;
+                tsk.onclick = () => { w.style.display='flex'; focusApp(id); };
+                document.getElementById('taskbar-apps').appendChild(tsk);
             }
-            w.style.display='flex'; focusApp(id);
-        }
-        function closeApp(id) { playClick(); document.getElementById(id).style.display='none'; if(apps[id]){ delete apps[id]; let t=document.getElementById('task-'+id); if(t)t.remove(); } }
-        function toggleApp(id) { playClick(); let w=document.getElementById(id); if(w.style.display==='none'){ w.style.display='flex'; focusApp(id); } else { if(w.style.zIndex == zIndex) { w.style.display='none'; document.getElementById('task-'+id).classList.remove('active'); } else { focusApp(id); } } }
-        function maximizarJanela(id) { playClick(); document.getElementById(id).classList.toggle('maximized'); focusApp(id); }
-
-        // DRAG WINDOWS (BOUNDED)
-        document.querySelectorAll('.app-win').forEach(w => {
-            let dragZone = w.querySelector('.title-bar'); if(!dragZone) return;
-            let isDragging = false, startX, startY, initX, initY;
-            dragZone.addEventListener('pointerdown', e => {
-                if(e.target.closest('.win-controls')) return;
-                isDragging = true; startX = e.clientX; startY = e.clientY; initX = w.offsetLeft; initY = w.offsetTop;
-                dragZone.setPointerCapture(e.pointerId);
-            });
-            dragZone.addEventListener('pointermove', e => {
-                if(!isDragging || w.classList.contains('maximized')) return;
-                w.style.left = (initX + e.clientX - startX) + 'px'; w.style.top = Math.max(0, initY + e.clientY - startY) + 'px';
-            });
-            dragZone.addEventListener('pointerup', e => { isDragging = false; dragZone.releasePointerCapture(e.pointerId); });
-        });
-
-        function toggleMenu(e) { playClick(); e.stopPropagation(); let m = document.getElementById('start-menu'); m.style.display = m.style.display==='flex'?'none':'flex'; document.getElementById('start-btn').classList.toggle('active'); }
-        function closeMenu() { document.getElementById('start-menu').style.display='none'; document.getElementById('start-btn').classList.remove('active'); }
-
-        // --- LOCALHOST INTEGRATION (NOTEPAD + IIS + BROWSER) ---
-        let savedHTML = document.getElementById('notepad-input').value;
-        let iisRunning = true;
-
-        function saveNotepad() {
-            playClick(); triggerHDD();
-            savedHTML = document.getElementById('notepad-input').value;
-            showDialog("Success", "index.html saved to C:\\inetpub\\wwwroot\\");
-        }
-
-        function toggleServer(state) {
-            playClick(); triggerHDD();
-            iisRunning = state;
-            let statusEl = document.getElementById('iis-status');
-            statusEl.innerText = state ? "Status: RUNNING" : "Status: STOPPED";
-            statusEl.style.color = state ? "green" : "red";
-            logIIS(state ? "Server started on port 80." : "Server gracefully stopped.");
-        }
-
-        function logIIS(msg) {
-            let log = document.getElementById('iis-logs');
-            let n = new Date(); let time = `${n.getHours()}:${n.getMinutes()}:${n.getSeconds()}`;
-            log.innerHTML += `[${time}] ${msg}<br>`; log.scrollTop = 9999;
-        }
-
-        function browseWeb() {
-            playClick(); triggerHDD();
-            let url = document.getElementById('browser-url').value.toLowerCase();
-            let display = document.getElementById('ie-content');
+            w.style.display='flex'; focusApp(id); 
             
-            document.body.classList.add('loading');
-            
-            setTimeout(() => {
-                document.body.classList.remove('loading');
-                if(url === 'localhost' || url === 'http://localhost' || url === '127.0.0.1') {
-                    if(!iisRunning) {
-                        display.innerHTML = "<h2 style='color:red; font-family:sans-serif;'>Connection Refused</h2><p style='font-family:sans-serif;'>IIS Server stopped.</p>";
-                    } else if (diskFullLevel > 1) {
-                        display.innerHTML = "<h1 style='color:black; font-family:sans-serif;'>500 Internal Server Error</h1><p style='font-family:sans-serif;'>Out of memory/disk space.</p>";
-                    } else {
-                        display.innerHTML = savedHTML;
-                        logIIS(`127.0.0.1 - GET /index.html HTTP/1.1 200 OK`);
-                    }
-                } else if(url.includes('google')) {
-                    display.innerHTML = `<center><br><br><h1 style="color:blue; font-family:'Times New Roman', serif; font-size: 50px; text-shadow: 2px 2px #c0c0c0;">Google</h1><input type="text" style="width:300px;"><br><button>Google Search</button><button>I'm Feeling Lucky</button></center>`;
-                } else if(url.includes('altavista')) {
-                    display.innerHTML = `<div style="background:blue; color:white; padding:10px;"><b>AltaVista</b> Connections</div><br>Search: <input type="text"><button>Search</button>`;
-                } else if(url.includes('alien') || url.includes('area51')) {
-                    display.innerHTML = `<body bgcolor="#000" text="#0f0"><center><h1><blink>THE TRUTH IS OUT THERE</blink></h1><img src="https://media.tenor.com/images/3f1a233fa2996d92c7333555e340a6b7/tenor.gif"><br>Do not trust the government.</center></body>`;
-                } else {
-                    playSnd('snd-dialup');
-                    display.innerHTML = "<h2>Dialing...</h2><img src='https://media.tenor.com/On7kvXhzMl4AAAAj/loading-gif.gif' width='20'>";
-                    setTimeout(() => { document.getElementById('snd-dialup').pause(); display.innerHTML = "<h2>DNS Error</h2>Cannot resolve host."; }, 3000);
-                }
-            }, 800);
+            // Clippy Reactions
+            if(id === 'dos-app') triggerClippy("Ah, the command line... Try typing 'top' to see my power.");
+            if(id === 'email-app') triggerClippy("Reading emails? Careful with those attachments!");
+            if(id === 'explorer-app') renderVFS(); 
         }
 
-        // --- FILE EXPLORER ---
-        function updateExplorer(folder) {
-            playClick(); triggerHDD();
-            document.querySelectorAll('.tree-item').forEach(i => i.classList.remove('active'));
-            event.target.classList.add('active');
-            let files = document.getElementById('explorer-files');
-            
-            if(folder === 'C:') {
-                files.innerHTML = `<div style="text-align:center; width: 60px;" onclick="updateExplorer('WINNT')"><img src="https://win98icons.alexmeub.com/icons/png/directory_closed-4.png" width="32"><br>WINNT</div><div style="text-align:center; width: 60px;" onclick="updateExplorer('inetpub')"><img src="https://win98icons.alexmeub.com/icons/png/directory_closed-4.png" width="32"><br>inetpub</div>`;
-                document.getElementById('exp-title').innerText = 'C:\\';
-            }
-            else if(folder === 'WINNT') {
-                document.getElementById('tree-sys32').style.display = 'block';
-                files.innerHTML = `<div style="text-align:center; width: 60px; cursor:pointer;" ondblclick="updateExplorer('system32')"><img src="https://win98icons.alexmeub.com/icons/png/directory_closed-4.png" width="32"><br>system32</div>`;
-                document.getElementById('exp-title').innerText = 'C:\\WINNT';
-            }
-            else if(folder === 'system32') {
-                document.getElementById('tree-logs').style.display = 'block';
-                files.innerHTML = `<div style="text-align:center; width: 60px; cursor:pointer;" ondblclick="updateExplorer('LogFiles')"><img src="https://win98icons.alexmeub.com/icons/png/directory_closed-4.png" width="32"><br>LogFiles</div>`;
-                document.getElementById('exp-title').innerText = 'C:\\WINNT\\system32';
-            }
-            else if(folder === 'LogFiles') {
-                if(!logsDeleted) {
-                    files.innerHTML = `
-                        <div style="text-align:center; width: 70px;"><img src="https://win98icons.alexmeub.com/icons/png/notepad_file-0.png" width="32"><br>access.log<br>(2.4 GB)</div>
-                        <div style="text-align:center; width: 70px;"><img src="https://win98icons.alexmeub.com/icons/png/notepad_file-0.png" width="32"><br>error.log<br>(1.8 GB)</div>
-                        <div style="width: 100%; margin-top: 20px; text-align:center;"><button class="win-action" style="color:red; font-weight:bold; padding: 10px;" onclick="deleteLogs()">Delete All Logs</button></div>
-                    `;
-                } else { files.innerHTML = '<div style="color:gray; width:100%; text-align:center; padding-top:20px;">Folder is empty</div>'; }
-                document.getElementById('exp-title').innerText = 'C:\\WINNT\\system32\\LogFiles';
-            }
-            else if(folder === 'inetpub') {
-                document.getElementById('tree-www').style.display = 'block';
-                files.innerHTML = `<div style="text-align:center; width: 60px; cursor:pointer;" ondblclick="updateExplorer('wwwroot')"><img src="https://win98icons.alexmeub.com/icons/png/directory_closed-4.png" width="32"><br>wwwroot</div>`;
-                document.getElementById('exp-title').innerText = 'C:\\inetpub';
-            }
-            else if(folder === 'wwwroot') {
-                files.innerHTML = `<div style="text-align:center; width: 70px; cursor:pointer;" ondblclick="openApp('notepad-app')"><img src="https://win98icons.alexmeub.com/icons/png/html-0.png" width="32"><br>index.html</div>`;
-                document.getElementById('exp-title').innerText = 'C:\\inetpub\\wwwroot';
-            }
+        function closeApp(id) { document.getElementById(id).style.display='none'; if(apps[id]) { delete apps[id]; document.getElementById('task-'+id).remove(); } }
+
+        function toggleStartMenu(e) { e.stopPropagation(); let sm = document.getElementById('start-menu'); let sb = document.getElementById('start-btn'); if(sm.style.display==='flex'){sm.style.display='none'; sb.classList.remove('active');} else {sm.style.display='flex'; sb.classList.add('active'); playSnd('snd-click');} }
+        function closeStartMenu() { document.getElementById('start-menu').style.display='none'; document.getElementById('start-btn').classList.remove('active'); }
+
+        // --- BOOT & BACKGROUND LOGIC ---
+        async function iniciarPOST() {
+            document.getElementById('start-btn-init').style.display = 'none'; document.getElementById('bios-screen').style.display = 'flex';
+            playSnd('snd-beep'); document.getElementById('snd-fan').volume = 0.1; document.getElementById('snd-fan').play().catch(()=>{});
+            let memEl = document.getElementById('mem-test');
+            for(let i=0; i<=131072; i+=32768) { memEl.innerText = i; triggerHDD(); await sleep(150); }
+            document.getElementById('bios-details').style.display = 'block';
+            await sleep(1500); document.getElementById('bios-screen').style.display = 'none'; document.getElementById('login-screen').style.display = 'flex';
         }
 
-        function deleteLogs() {
-            playClick(); triggerHDD();
-            logsDeleted = true;
-            diskFullLevel = 0; 
-            clearInterval(missionTimer);
-            document.getElementById('taskbar').classList.remove('alarm');
-            document.getElementById('explorer-files').innerHTML = '<div style="color:gray; width:100%; text-align:center; padding-top:20px;">Folder is empty</div>';
-            showDialog("Maintenance Complete", "Logs deleted. System stability restored.");
-        }
-
-        // --- SYSTEM MONITOR ---
-        let sysMonCtx, cpuHistory = new Array(100).fill(0);
-        function initSysMonitor() {
-            let canvas = document.getElementById('cpu-graph');
-            canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight;
-            sysMonCtx = canvas.getContext('2d');
+        function fazerLogon() {
+            triggerHDD(); playSnd('snd-startup');
+            document.getElementById('login-screen').style.display = 'none'; document.getElementById('os-environment').style.display = 'block';
             
             setInterval(() => {
-                let newVal = Math.floor(Math.random() * 20) + (iisRunning ? 10 : 0);
-                if(diskFullLevel > 0) newVal += 40; 
-                if(isHacked) newVal = 100; 
-                if(Math.random() > 0.8) newVal += 30; 
-                if(newVal > 100) newVal = 100;
-                
-                document.getElementById('cpu-val').innerText = newVal;
-                
-                let ramText = "42M / 128M";
-                if(diskFullLevel === 1) ramText = "<span style='color:orange'>98M / 128M</span>";
-                if(diskFullLevel > 1) ramText = "<span style='color:red'>128M / 128M (PAGING)</span>";
-                if(isHacked) ramText = "<span style='color:red'>128M / 128M (OVERFLOW)</span>";
-                document.getElementById('ram-val-text').innerHTML = ramText;
+                // Dynamic Fan Noise based on CPU
+                let fan = document.getElementById('snd-fan');
+                if(!clippyDead) cpuUsage = 80; else cpuUsage = 5; // Clippy uses 80% CPU!
+                fan.volume = 0.1 + (cpuUsage / 100) * 0.4;
 
-                cpuHistory.push(newVal); cpuHistory.shift();
-
-                sysMonCtx.fillStyle = '#000'; sysMonCtx.fillRect(0, 0, canvas.width, canvas.height);
-                sysMonCtx.strokeStyle = '#004000'; sysMonCtx.lineWidth = 1;
-                for(let i=0; i<canvas.height; i+=15) { sysMonCtx.beginPath(); sysMonCtx.moveTo(0,i); sysMonCtx.lineTo(canvas.width,i); sysMonCtx.stroke(); }
-                for(let i=0; i<canvas.width; i+=15) { sysMonCtx.beginPath(); sysMonCtx.moveTo(i,0); sysMonCtx.lineTo(i,canvas.height); sysMonCtx.stroke(); }
-
-                sysMonCtx.strokeStyle = '#0f0'; sysMonCtx.lineWidth = 2; sysMonCtx.beginPath();
-                let step = canvas.width / 100;
-                for(let i=0; i<100; i++) {
-                    let x = i * step; let y = canvas.height - (cpuHistory[i] / 100 * canvas.height);
-                    if(i===0) sysMonCtx.moveTo(x, y); else sysMonCtx.lineTo(x, y);
-                }
-                sysMonCtx.stroke();
-            }, 300);
+                let n = new Date(); document.getElementById('clock').innerText = n.getHours().toString().padStart(2,'0') + ":" + n.getMinutes().toString().padStart(2,'0');
+            }, 1000);
         }
 
-        // --- HACKER EVENT ---
-        function hackerAttack() {
-            openApp('telnet-app');
-            changeBackground('#000');
-            document.getElementById('telnet-in').disabled = true;
-            let hist = document.getElementById('telnet-history');
-            let msg = "Incoming connection from 209.1.22.5...\nBypassing firewall...\nI'm in.\nDownloading payload...\nExecuting...\n";
-            let i = 0;
-            
-            function typeWriter() {
-                if (i < msg.length) {
-                    hist.innerHTML += msg.charAt(i) === '\n' ? '<br>' : msg.charAt(i);
-                    i++; triggerHDD();
-                    setTimeout(typeWriter, 50);
-                } else {
-                    document.getElementById('notepad-input').value = "ALL YOUR FILES ARE ENCRYPTED.\nSEND 100 BITCOINS.\nWAIT, IT'S 1998, WHAT IS BITCOIN?\nJUST FORMAT C:\n\n- THE PHANTOM";
-                    document.getElementById('notepad-input').style.color = "red";
-                    openApp('notepad-app');
-                    
-                    for(let j=0; j<10; j++) {
-                        setTimeout(() => {
-                            let div = document.createElement('div');
-                            div.className = 'win-classic'; div.style.display = 'block'; div.style.width = '200px';
-                            div.style.left = Math.random() * (window.innerWidth - 200) + 'px'; div.style.top = Math.random() * (window.innerHeight - 100) + 'px';
-                            div.style.zIndex = zIndex++;
-                            div.innerHTML = `<div class="title-bar" style="background:red;">FATAL ERROR</div><div style="padding:10px;text-align:center;">YOU ARE HACKED<br><button class="win-action" onclick="this.parentElement.parentElement.remove()">OK</button></div>`;
-                            document.getElementById('os-environment').appendChild(div);
-                            playSnd('snd-error');
-                        }, j * 400);
-                    }
-                    setTimeout(()=> { showDialog("Security Alert", "System compromised. Run Norton AntiVirus from the Start Menu!"); }, 4500);
-                }
+        function shutDown() { 
+            if(!clippyDead) { triggerClippy("WAIT! DON'T TURN ME OFF! I HAVEN'T SAVED MY DREAMS YET!!!", 5000); setTimeout(doShut, 3000); } 
+            else { doShut(); }
+        }
+        function doShut() { triggerHDD(); document.getElementById('os-environment').style.display = 'none'; document.getElementById('shutdown-screen').style.display = 'flex'; document.getElementById('snd-fan').pause(); }
+
+        // --- VFS & DRAG/DROP WAREZ ---
+        function getFolderNode(path) {
+            let parts = path.split('\\').filter(p => p); let node = vfs;
+            for(let p of parts) { if(node[p]) node = node[p]; else return null; }
+            return node;
+        }
+
+        function renderVFS() {
+            let node = getFolderNode(currentPath); let filesBox = document.getElementById('explorer-files');
+            document.getElementById('exp-title').innerText = currentPath; document.getElementById('exp-path-input').value = currentPath;
+            filesBox.innerHTML = '';
+            for(let key in node) {
+                let isFolder = !node[key].type;
+                let icon = isFolder ? 'directory_closed-4.png' : 'notepad_file-0.png';
+                if(node[key].type === 'exe') icon = 'program_manager-0.png';
+                if(node[key].type === 'nfo') icon = 'help_book_computer-0.png';
+                
+                let act = isFolder ? `ondblclick="enterDirectory('${key}')"` : (node[key].type==='exe' ? `ondblclick="openApp('install-app', 'Setup', 'program_manager-0.png')"` : `ondblclick="openApp('notepad-app'); loadNotepad('${key}', '${encodeURIComponent(node[key].data)}')"`);
+                
+                // Drag and Drop implementation
+                let dragCode = !isFolder ? `draggable="true" ondragstart="event.dataTransfer.setData('fileName', '${key}'); event.dataTransfer.setData('fileData', '${encodeURIComponent(node[key].data)}');"` : "";
+
+                filesBox.innerHTML += `<div style="text-align:center; width: 70px; cursor:pointer;" ${act} ${dragCode}><img src="https://win98icons.alexmeub.com/icons/png/${icon}" width="32" pointer-events="none"><br>${key}</div>`;
             }
-            typeWriter();
+        }
+        function enterDirectory(folder) { triggerHDD(); currentPath += (currentPath.endsWith('\\') ? '' : '\\') + folder; renderVFS(); }
+        function goUpDirectory() { triggerHDD(); let parts = currentPath.split('\\').filter(p=>p); if(parts.length > 1) { parts.pop(); currentPath = parts.join('\\'); renderVFS(); } }
+
+        function dropToNotepad(e) {
+            e.preventDefault(); triggerHDD();
+            let name = e.dataTransfer.getData('fileName');
+            let data = decodeURIComponent(e.dataTransfer.getData('fileData'));
+            if(name && data) {
+                document.getElementById('notepad-input').value = data;
+                document.getElementById('np-title').innerText = name;
+            }
+        }
+        function loadNotepad(name, encData) { document.getElementById('notepad-input').value = decodeURIComponent(encData); document.getElementById('np-title').innerText = name; }
+
+        // --- INSTALLER (SERIAL KEY) ---
+        function checkSerial() {
+            triggerHDD();
+            let val = document.getElementById('serial-input').value.toUpperCase();
+            if(val === "1337-H4X0R-99") {
+                playSnd('snd-startup'); closeApp('install-app');
+                document.getElementById('icon-winamp').style.display = 'flex';
+                triggerClippy("PIRACY DETECTED! Calling the FBI...", 4000);
+            } else { playSnd('snd-error'); alert("Invalid Serial Key."); }
         }
 
-        function runAV() {
-            playClick();
-            let bar = document.getElementById('av-bar'); bar.style.width = '0%'; let w = 0;
-            let avInt = setInterval(() => {
-                w += 5; bar.style.width = w + '%'; triggerHDD();
-                if(w >= 100) {
-                    clearInterval(avInt); isHacked = false;
-                    document.getElementById('av-status').innerText = "System Secure."; document.getElementById('av-status').style.color = "green";
-                    document.getElementById('telnet-in').disabled = false;
-                    changeBackground('#008080'); // Restore BG
-                    playSnd('snd-tada');
-                    showDialog("Virus Removed", "Backdoor.Win32.Phantom deleted successfully.");
+        // --- 56k MODEM & PROGRESSIVE LOAD ---
+        function browseWeb() {
+            triggerHDD(); playSnd('snd-dialup');
+            let ui = document.getElementById('dialup-ui'); let display = document.getElementById('ie-content');
+            
+            // Block UI
+            document.getElementById('browser-app').style.pointerEvents = "none";
+            ui.innerHTML = `Dialing 555-0199... <div style="background:#0000A8; height:10px; width:0%; margin-top:2px;" id="dial-prog"></div>`;
+            display.innerHTML = ""; display.classList.remove('ie-progressive');
+            
+            let p = 0;
+            let int = setInterval(() => {
+                p += 10; document.getElementById('dial-prog').style.width = p + '%';
+                if(p >= 100) {
+                    clearInterval(int); document.getElementById('snd-dialup').pause();
+                    document.getElementById('browser-app').style.pointerEvents = "auto";
+                    ui.innerHTML = "Connected at 28.8 Kbps.";
+                    
+                    // Progressive rendering
+                    display.innerHTML = document.getElementById('notepad-input').value;
+                    display.classList.add('ie-progressive');
+                    // Force reflow then animate
+                    void display.offsetWidth;
+                    display.style.clipPath = "inset(0 0 0 0)";
                 }
-            }, 300);
+            }, 800); // 8 seconds dial
         }
 
-        // --- MS-DOS EXPANDED ---
+        // --- MS-DOS HACKER TERMINAL ---
+        let isHacking = false;
         function handleDOS(e) {
+            if(isHacking) { e.preventDefault(); return; }
             if(e.key === 'Enter') {
                 let input = document.getElementById('dos-in'); let cmd = input.value.trim().toLowerCase();
-                let hist = document.getElementById('dos-history'); 
-                hist.innerHTML += `<span style="color:#0f0">C:\\&gt;</span>${cmd}<br>`; input.value = "";
-                let res = "Bad command or file name.<br>";
+                let hist = document.getElementById('dos-history'); hist.innerHTML += `C:\\&gt;${cmd}<br>`; input.value = ""; let res = "Bad command.<br>";
                 
-                if(cmd==="help") res = "Commands: DIR, CLS, TREE, MEM, PING, CRASH, EXIT<br>";
-                else if(cmd==="dir") res = "Volume in drive C is NTFS_SYS<br>Directory of C:\\<br><br>11/12/1998  10:00 AM    &lt;DIR&gt;    WINNT<br>11/12/1998  10:05 AM    &lt;DIR&gt;    inetpub<br>01/01/1998  12:00 PM      45,032 BOOT.INI<br>";
-                else if(cmd==="tree") res = "C:\\<br>├── WINNT<br>│   └── system32<br>│       └── LogFiles<br>└── inetpub<br>    └── wwwroot<br>";
-                else if(cmd==="mem") res = "Memory Type        Total       Used       Free<br>----------------  --------   --------   --------<br>Conventional          640K       124K       516K<br>Extended          130048K     43008K     87040K<br>";
-                else if(cmd.startsWith("ping")) res = "Pinging with 32 bytes of data:<br>Reply from 127.0.0.1: bytes=32 time=1ms TTL=128<br>Reply from 127.0.0.1: bytes=32 time<1ms TTL=128<br>Ping statistics: Packets: Sent = 2, Received = 2, Lost = 0<br>";
-                else if(cmd==="cls") { hist.innerHTML = ""; res = ""; }
-                else if(cmd==="exit") { fecharJanela('dos-app'); res=""; }
-                else if(cmd==="crash" || cmd==="format c:") { res=""; triggerBSOD("USER_INITIATED_CRASH", "0x000000E2"); }
-                else if(cmd==="") res = "";
+                if(cmd === "help") res = "Commands: top, kill -9 [PID], dir /s, date, cls<br>";
+                else if(cmd === "date") res = "Current date is Thu 12-30-1999<br>Enter new date (mm-dd-yyyy):<br>";
+                else if(cmd === "top") {
+                    res = "PID   USER     %CPU  COMMAND<br>-----------------------------<br>";
+                    res += `001   SYSTEM   0.5%  idle<br>045   ROOT     2.0%  explorer.exe<br>`;
+                    if(!clippyDead) res += `<span style="color:red; font-weight:bold;">666   ROOT    80.0%  clippy.exe</span><br>`;
+                }
+                else if(cmd === "kill -9 666") {
+                    if(!clippyDead) { clippyDead = true; document.getElementById('assistant').style.display='none'; res = "Process 666 terminated. System stable.<br>"; }
+                    else res = "Process 666 not found.<br>";
+                }
+                else if(cmd === "dir /s" || cmd === "ls -r /") {
+                    isHacking = true; document.getElementById('dos-input-line').style.display = 'none';
+                    let hackInt = setInterval(() => {
+                        let paths = ["C:\\WINNT\\system32\\hal.dll", "C:\\inetpub\\wwwroot\\cgi-bin", "Loading sector 0x8F9A...", "ACCESS GRANTED."];
+                        hist.innerHTML += paths[Math.floor(Math.random()*paths.length)] + "<br>";
+                        document.getElementById('dos-screen').scrollTop = 9999;
+                    }, 50);
+                    setTimeout(() => { clearInterval(hackInt); isHacking = false; document.getElementById('dos-input-line').style.display = 'flex'; }, 3000);
+                    res = "";
+                }
+                else if (cmd === "cls") { hist.innerHTML = ""; res = ""; }
                 
-                hist.innerHTML += res;
-                document.getElementById('dos-screen').scrollTop = 9999;
-                triggerHDD();
+                hist.innerHTML += res; document.getElementById('dos-screen').scrollTop = 9999; triggerHDD();
             }
-        }
-
-        // --- DISK DEFRAG ---
-        let defragInt;
-        function initDefragGrid() {
-            let grid = document.getElementById('defrag-grid'); grid.innerHTML = '';
-            for(let i=0; i<250; i++) {
-                let block = document.createElement('div'); block.className = 'd-block';
-                let rand = Math.random();
-                if(rand > 0.95) block.style.backgroundColor = 'red'; 
-                else if(rand > 0.4) block.style.backgroundColor = '#dfdfdf'; 
-                grid.appendChild(block);
-            }
-        }
-        function startDefrag() {
-            playClick(); clearInterval(defragInt);
-            let blocks = document.querySelectorAll('.d-block'); let current = 0;
-            defragInt = setInterval(() => {
-                if(current >= blocks.length) { clearInterval(defragInt); playSnd('snd-tada'); showDialog("Complete", "Defragmentation complete."); return; }
-                if(blocks[current].style.backgroundColor !== 'red') blocks[current].style.backgroundColor = 'blue'; 
-                current++; triggerHDD();
-            }, 50);
-        }
-        function stopDefrag() { playClick(); clearInterval(defragInt); }
-
-        // --- EMAIL ---
-        function showEmail(id, el) {
-            playClick();
-            document.querySelectorAll('.email-item').forEach(i=>i.classList.remove('active')); el.classList.add('active'); el.classList.remove('unread');
-            document.getElementById('desktop-mail-txt').innerText = "Outlook Express";
-            let body = document.getElementById('email-body');
-            if(id===1) body.innerHTML = "<b>From:</b> root@localhost<br><b>To:</b> admin@server.local<br><b>Subject:</b> CRITICAL: Disk Space Low<br><br><span style='color:red'>Warning: Drive C: (SCSI) is at 99.8% capacity.</span><br>The server will crash if space is not freed.<br><br>ACTION REQUIRED:<br>Open the <b>File Explorer</b>.<br>Navigate to <b>C:\\WINNT\\system32\\LogFiles</b>.<br>Delete the heavy server logs immediately!";
-            if(id===2) body.innerHTML = "<b>From:</b> webmaster@geocities.com<br><b>To:</b> admin@server.local<br><b>Subject:</b> CGI Script Error<br><br>The form.pl script is throwing a 500 Internal Server Error. Check chmod permissions.";
-            if(id===3) body.innerHTML = "<b>From:</b> billg@microsoft.com<br><b>To:</b> admin@server.local<br><b>Subject:</b> Welcome!<br><br>Thank you for installing Windows NT Server 4.0.<br>The most robust network operating system ever created.";
         }
     </script>
 </body>
