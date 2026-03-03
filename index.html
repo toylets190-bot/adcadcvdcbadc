@@ -7,15 +7,7 @@
     <style>
         /* --- CORE SYSTEM (SKEUOMORPHISM & PIXEL-PERFECT) --- */
         @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
-        
-        * { 
-            box-sizing: border-box; user-select: none; 
-            font-family: 'Tahoma', 'MS Sans Serif', sans-serif;
-            /* DISABLE ANTI-ALIASING FOR 90s PIXEL FEEL */
-            -webkit-font-smoothing: none; 
-            -moz-osx-font-smoothing: grayscale; 
-            font-smooth: never;
-        }
+        * { box-sizing: border-box; user-select: none; font-family: 'Tahoma', 'MS Sans Serif', sans-serif; -webkit-font-smoothing: none; font-smooth: never; }
         
         body { background: #111; margin: 0; height: 100dvh; width: 100vw; overflow: hidden; display: flex; justify-content: center; align-items: center; perspective: 1000px; font-size: 11px; color: #000; cursor: url('https://win98icons.alexmeub.com/cursors/arrow.cur'), default; }
         input, textarea, .cli-screen { cursor: url('https://win98icons.alexmeub.com/cursors/ibeam.cur'), text; }
@@ -31,15 +23,8 @@
         /* HARDWARE EVENTS */
         .meltdown { animation: melt 0.1s infinite alternate; }
         @keyframes melt { 0% { filter: blur(0px) hue-rotate(0deg); transform: rotateX(1deg) scale(1.01) skewX(0deg); } 100% { filter: blur(2px) hue-rotate(-15deg); transform: rotateX(2deg) scale(1.03) skewX(2deg); } }
-        
         .degauss { animation: degaussAnim 1s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
-        @keyframes degaussAnim { 
-            0% { transform: scale(1) skew(0deg); filter: blur(0px) hue-rotate(0deg); }
-            10% { transform: scale(1.05) skew(10deg); filter: blur(5px) hue-rotate(90deg); }
-            20% { transform: scale(0.95) skew(-10deg); filter: blur(4px) hue-rotate(-90deg); }
-            40% { transform: scale(1.02) skew(5deg); filter: blur(2px) hue-rotate(45deg); }
-            100% { transform: scale(1) skew(0deg); filter: blur(0px) hue-rotate(0deg); }
-        }
+        @keyframes degaussAnim { 0% { transform: scale(1) skew(0deg); filter: blur(0px) hue-rotate(0deg); } 10% { transform: scale(1.05) skew(10deg); filter: blur(5px) hue-rotate(90deg); } 20% { transform: scale(0.95) skew(-10deg); filter: blur(4px) hue-rotate(-90deg); } 40% { transform: scale(1.02) skew(5deg); filter: blur(2px) hue-rotate(45deg); } 100% { transform: scale(1) skew(0deg); filter: blur(0px) hue-rotate(0deg); } }
 
         /* SCREENS & DESKTOP */
         .fullscreen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000000; background: #000; color: #c0c0c0; font-family: 'VT323', monospace; font-size: 18px;}
@@ -64,9 +49,7 @@
         button.win-action { background: #c0c0c0; border: 2px outset #fff; font-size: 11px; padding: 4px 12px; cursor: pointer; color: #000;}
         button.win-action:active { border: 2px inset #fff; }
         input[type="text"], input[type="password"], textarea { padding: 3px; border: 2px inset #fff; font-size: 11px; outline: none; font-family: 'Courier New', monospace;}
-        .menu-bar { background: #c0c0c0; padding: 2px 6px; display: flex; gap: 10px; border-bottom: 1px solid #808080;}
-        .menu-item { cursor: pointer; padding: 2px 4px; } .menu-item:hover { background: #0000A8; color: #fff; }
-
+        
         /* TASKBAR & START MENU */
         .taskbar { position: absolute; bottom: 0; width: 100%; height: 30px; background: #c0c0c0; border-top: 1px solid #dfdfdf; box-shadow: inset 0 1px 0 #fff; display: flex; justify-content: space-between; align-items: center; padding: 2px; z-index: 99999; }
         .start-btn { font-weight: bold; display: flex; align-items: center; gap: 4px; padding: 0 6px; border: 2px outset #fff; background: #c0c0c0; height: 100%; cursor: pointer;}
@@ -75,38 +58,20 @@
         .task-item { display: flex; align-items: center; gap: 4px; padding: 2px 6px; font-weight: bold; border: 2px outset #fff; background: #c0c0c0; height: 24px; min-width: 80px; max-width: 140px; cursor: pointer; white-space: nowrap; overflow: hidden; }
         .task-item.active { border: 2px inset #fff; background: #dfdfdf; padding-top: 4px;}
         .sys-tray { border: 2px inset #fff; padding: 0 6px; display: flex; align-items: center; gap: 4px; height: 100%; background: #c0c0c0;}
-        #start-menu { display: none; position: absolute; bottom: 30px; left: 0; width: 220px; background: #c0c0c0; border: 2px outset #fff; box-shadow: 2px 2px 5px rgba(0,0,0,0.5); z-index: 100000; flex-direction: row; }
-        .start-sidebar { background: linear-gradient(to bottom, #0000A8, #1084d0); width: 35px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 5px;}
-        .start-sidebar span { color: white; font-weight: bold; transform: rotate(-90deg); white-space: nowrap; font-size: 18px; margin-bottom: 40px;}
-        .start-items { flex: 1; display: flex; flex-direction: column; padding: 2px; }
-        .start-item { padding: 8px 10px; display: flex; align-items: center; gap: 10px; font-size: 11px; cursor: pointer; color: #000; }
-        .start-item:hover { background: #0000A8; color: white; }
 
         /* HARDWARE PANEL */
         #hardware-panel { position: absolute; right: 20px; top: 30px; width: 160px; background: #e0dfd5; border: 3px outset #fff; box-shadow: 5px 5px 15px rgba(0,0,0,0.8); z-index: 999999; padding: 15px; display: flex; flex-direction: column; gap: 15px;}
         .hw-btn { border: 2px outset #fff; background: #c0c0c0; cursor: pointer; text-align: center; padding: 8px; font-weight: bold; font-size: 11px;}
         .hw-btn:active { border: 2px inset #fff; padding: 9px 7px 7px 9px;}
 
-        /* ASSISTANT (EVIL CLIPPY) */
-        #assistant { position: absolute; bottom: 40px; right: 10px; z-index: 999990; display: none; align-items: flex-end; gap: 10px; animation: popUp 0.3s ease-out; }
-        @keyframes popUp { from { transform: translateY(50px); opacity: 0;} to { transform: translateY(0); opacity: 1;} }
-        .speech-bubble { background: #ffffe1; border: 1px solid #000; padding: 10px; border-radius: 10px 10px 0 10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); max-width: 200px; position: relative;}
-        .speech-bubble::after { content: ''; position: absolute; bottom: -10px; right: 10px; border-width: 10px 10px 0 0; border-style: solid; border-color: #000 transparent transparent transparent; }
-        .speech-bubble::before { content: ''; position: absolute; bottom: -8px; right: 11px; border-width: 8px 8px 0 0; border-style: solid; border-color: #ffffe1 transparent transparent transparent; z-index: 1;}
+        /* KEYGEN / CRACK APP */
+        .keygen-skin { background: #000; border: 2px solid #555; color: #f00; font-family: 'VT323', monospace; padding: 10px; text-align: center; }
+        .keygen-btn { background: #400; border: 2px outset #f00; color: #fff; cursor: pointer; padding: 5px 20px; font-weight: bold; font-family: 'VT323', monospace; font-size: 16px; width: 100%; margin-top: 10px;}
+        .keygen-btn:active { border: 2px inset #f00; }
 
-        /* APP SPECIFIC UI */
-        .cli-screen { background: #000; color: #c0c0c0; font-family: 'VT323', monospace; font-size: 16px; flex: 1; padding: 5px; overflow-y: auto; border: 2px inset #fff; margin: 2px;}
-        .cli-input { background: transparent; border: none; color: inherit; font-family: inherit; outline: none; flex: 1; font-size: inherit; width: 80%;}
-        
-        .prog-loading { background: #0000A8; height: 15px; width: 0%; transition: width 0.2s; }
-        .ie-progressive { clip-path: inset(0 0 100% 0); transition: clip-path 0.5s linear; }
+        /* BILL GATES VIRUS POPUP */
+        .gates-virus { position: absolute; border: 2px outset #fff; background: #c0c0c0; padding: 2px; box-shadow: 2px 2px 5px rgba(0,0,0,0.5); z-index: 999995; display: flex; flex-direction: column;}
 
-        /* WINAMP WAREZ SKIN */
-        .winamp-skin { background: #111; border: 2px solid #444; color: #0f0; font-family: 'VT323', monospace; padding: 10px; width: 300px; display: flex; flex-direction: column; gap: 10px; }
-        .winamp-display { background: #000; border: 2px inset #333; padding: 5px; font-size: 16px; text-align: center; color: #0f0;}
-        .winamp-btn { background: #333; border: 2px outset #555; color: #0f0; cursor: pointer; padding: 2px 10px; font-weight: bold;}
-        .winamp-btn:active { border: 2px inset #555; }
-        
         #bsod { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #0000aa; color: #fff; font-family: 'Courier New', monospace; padding: 20px; font-size: 14px; font-weight: bold; z-index: 9999999; display: none; cursor: none;}
     </style>
 </head>
@@ -117,278 +82,151 @@
     <audio id="snd-click" src="https://www.myinstants.com/media/sounds/mouse-click.mp3"></audio>
     <audio id="snd-error" src="https://www.myinstants.com/media/sounds/windows-98-error.mp3"></audio>
     <audio id="snd-hdd" src="https://cdn.pixabay.com/audio/2022/03/15/audio_24a520263f.mp3"></audio>
-    <audio id="snd-beep" src="https://www.myinstants.com/media/sounds/pc-beep.mp3"></audio>
-    <audio id="snd-dialup" src="https://www.myinstants.com/media/sounds/dial-up-modem-01.mp3"></audio>
     <audio id="snd-fan" src="https://cdn.pixabay.com/audio/2022/03/09/audio_ed8aea841e.mp3" loop></audio>
-    <audio id="snd-degauss" src="https://www.myinstants.com/media/sounds/bass-drop.mp3"></audio> <!-- Placeholder for Degauss -->
-    <audio id="snd-eurodance" src="https://cdn.pixabay.com/audio/2022/01/18/audio_d0a13f69d2.mp3" loop></audio> <!-- Winamp Music -->
+    <audio id="snd-degauss" src="https://www.myinstants.com/media/sounds/bass-drop.mp3"></audio>
+    <audio id="snd-keygen" src="https://cdn.pixabay.com/audio/2022/01/18/audio_d0a13f69d2.mp3" loop></audio>
 
     <!-- HARDWARE CHASSIS PANEL -->
     <div id="hardware-panel">
         <div style="background: #000; color: #0f0; padding: 2px 5px; font-family: 'VT323', monospace; text-align: center; border: 2px inset #fff;">PENTIUM II SERVER</div>
-        <div class="hw-btn" onclick="degaussMonitor()" title="Removes magnetic interference">🧲 Degauss CRT</div>
+        <div class="hw-btn" onclick="degaussMonitor()">🧲 Degauss CRT</div>
         <div class="hw-btn" style="color:#aa0000;" onclick="location.reload()">⭕ Physical Reset</div>
         <div style="display:flex; justify-content:center; align-items:center; gap:10px; border-top:1px solid #808080; padding-top:10px;">
-            <div style="width:12px; height:12px; background:#0f0; border-radius:50%; box-shadow:0 0 8px #0f0;" title="Power LED"></div>
-            <div id="hw-hdd-led" style="width:12px; height:12px; background:#333; border-radius:50%;" title="HDD Activity"></div>
+            <div style="width:12px; height:12px; background:#0f0; border-radius:50%; box-shadow:0 0 8px #0f0;"></div>
+            <div id="hw-hdd-led" style="width:12px; height:12px; background:#333; border-radius:50%;"></div>
         </div>
     </div>
 
     <div id="screen-container" class="crt">
 
-        <!-- BOOT -->
+        <!-- BOOT & LOGIN -->
         <div id="start-btn-init" class="fullscreen" style="background: #000; z-index: 2000000;">
             <button class="win-action" style="font-size: 20px; padding: 20px;" onclick="iniciarPOST()">Power On</button>
         </div>
-
-        <div id="bios-screen" class="fullscreen">
-            <div style="width: 100%; max-width: 600px;">
-                Award Modular BIOS v4.51PG, An Energy Star Ally<br>Intel Pentium II Processor 350MHz<br>
-                Memory Test : <span id="mem-test">0</span>K OK<br><br>
-                <div id="bios-details" style="display: none;">Starting Windows NT Server...</div>
-            </div>
-        </div>
-
-        <!-- LOGIN -->
+        <div id="bios-screen" class="fullscreen"><div style="width: 100%; max-width: 600px;">Award Modular BIOS v4.51PG<br>Memory Test : <span id="mem-test">0</span>K OK<br><div id="bios-details" style="display: none;">Starting Windows NT Server...</div></div></div>
+        
         <div id="login-screen" class="fullscreen" style="background: #008080;">
             <div style="background: #c0c0c0; border: 2px outset #fff; width: 380px; padding: 2px;">
                 <div style="background: linear-gradient(to right, #0000A8, #1084d0); color: white; padding: 3px 5px; font-weight: bold;">Logon Information</div>
                 <div style="padding: 10px; display:flex;">
                     <img src="https://win98icons.alexmeub.com/icons/png/key-0.png" width="48" style="margin-right: 15px;">
-                    <div style="flex: 1;">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">User: <input type="text" value="Administrator" readonly></div>
-                        <div style="display:flex; justify-content:space-between;">Pass: <input type="password" onkeydown="if(event.key==='Enter') fazerLogon()"></div>
-                    </div>
+                    <div style="flex: 1;"><div style="display:flex; justify-content:space-between; margin-bottom:5px;">User: <input type="text" value="Administrator" readonly></div><div style="display:flex; justify-content:space-between;">Pass: <input type="password" onkeydown="if(event.key==='Enter') fazerLogon()"></div></div>
                 </div>
                 <div style="text-align: right; padding: 10px; border-top: 1px solid #808080;"><button class="win-action" style="width:80px;" onclick="fazerLogon()">OK</button></div>
             </div>
-        </div>
-
-        <!-- EVIL CLIPPY -->
-        <div id="assistant">
-            <div class="speech-bubble" id="assistant-msg">I'm watching you...</div>
-            <img src="https://win98icons.alexmeub.com/icons/png/help_book_computer-0.png" width="48">
         </div>
 
         <!-- DESKTOP -->
         <div id="os-environment">
             <div id="desktop-area">
                 <div class="desktop-icon" ondblclick="openApp('explorer-app', 'My Computer', 'computer_explorer-5.png')"><img src="https://win98icons.alexmeub.com/icons/png/computer_explorer-5.png"><span>My Computer</span></div>
-                <div class="desktop-icon" ondblclick="openApp('email-app', 'Outlook Express', 'envelope_closed-0.png')"><img src="https://win98icons.alexmeub.com/icons/png/envelope_closed-0.png"><span>Outlook</span></div>
-                <div class="desktop-icon" ondblclick="openApp('browser-app', 'Netscape', 'msie1-2.png')"><img src="https://win98icons.alexmeub.com/icons/png/msie1-2.png"><span>Netscape 4</span></div>
                 <div class="desktop-icon" ondblclick="openApp('dos-app', 'MS-DOS Prompt', 'console_prompt-0.png')"><img src="https://win98icons.alexmeub.com/icons/png/console_prompt-0.png"><span>MS-DOS</span></div>
-                <div class="desktop-icon" ondblclick="openApp('notepad-app', 'Notepad', 'notepad-5.png')"><img src="https://win98icons.alexmeub.com/icons/png/notepad-5.png"><span>Notepad</span></div>
-                <!-- Hidden Winamp Icon until unlocked -->
-                <div class="desktop-icon" id="icon-winamp" style="display:none;" ondblclick="openApp('winamp-app', 'Winamp 2.x', 'cd_audio_cd_a-2.png')"><img src="https://win98icons.alexmeub.com/icons/png/cd_audio_cd_a-2.png"><span>Winamp</span></div>
+                <!-- THE CRACK APP -->
+                <div class="desktop-icon" ondblclick="openKeygen()"><img src="https://win98icons.alexmeub.com/icons/png/key-0.png"><span>NT_Patcher.exe</span></div>
             </div>
 
-            <!-- EXPLORER (VFS + DRAG AND DROP) -->
-            <div class="win-classic app-win" id="explorer-app" style="top:10%; left:10%; width: 450px; height: 350px;">
-                <div class="title-bar"><div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/directory_explorer-5.png" width="14"> Exploring - <span id="exp-title">C:\</span></div><div class="win-controls"><div class="win-btn close" onclick="closeApp('explorer-app')">X</div></div></div>
-                <div style="background:#c0c0c0; padding:4px; display:flex; gap:10px; border-bottom: 2px outset #fff;">
-                    Address: <input type="text" id="exp-path-input" value="C:\" style="flex:1;" readonly>
-                    <button class="win-action" onclick="goUpDirectory()">Go Up [..]</button>
-                </div>
-                <div style="display: flex; flex: 1; border: 2px inset #fff; margin: 2px; background: #fff; overflow: hidden; height: calc(100% - 65px);">
-                    <div style="flex: 1; padding: 10px; display: flex; flex-wrap: wrap; gap: 15px; align-content: flex-start; overflow-y: auto;" id="explorer-files"></div>
-                </div>
-            </div>
-
-            <!-- NOTEPAD (DRAG DROP TARGET) -->
-            <div class="win-classic app-win" id="notepad-app" style="top:20%; left:20%; width: 400px; height: 300px;">
-                <div class="title-bar"><div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/notepad-5.png" width="14"> <span id="np-title">Untitled</span> - Notepad</div><div class="win-controls"><div class="win-btn close" onclick="closeApp('notepad-app')">X</div></div></div>
-                <div class="menu-bar"><span class="menu-item" style="color:blue;"><u>S</u>ave (to localhost)</span></div>
-                <textarea id="notepad-input" style="flex:1; border:none; border-top: 1px solid #fff; padding:4px; resize:none; font-size: 13px;" ondragover="event.preventDefault()" ondrop="dropToNotepad(event)">&lt;html&gt;&lt;body&gt;&lt;h1&gt;Welcome to NT Server!&lt;/h1&gt;&lt;/body&gt;&lt;/html&gt;</textarea>
-            </div>
-
-            <!-- OUTLOOK (SERIAL KEY) -->
-            <div class="win-classic app-win" id="email-app" style="top:15%; left:35%; width: 400px; height: 300px;">
-                <div class="title-bar"><div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/envelope_closed-0.png" width="14"> Outlook Express</div><div class="win-controls"><div class="win-btn close" onclick="closeApp('email-app')">X</div></div></div>
-                <div style="display:flex; flex-direction:column; flex:1; padding: 2px;">
-                    <div style="background: #fff; border: 2px inset #fff; height: 100px; overflow-y:auto; cursor:pointer;">
-                        <div style="padding:4px; border-bottom:1px solid #ccc; font-weight:bold; background:#0000A8; color:#fff;">From: Razor1911 - RE: Winamp Serial</div>
-                        <div style="padding:4px; border-bottom:1px solid #ccc;">From: Bill Gates - Welcome to NT</div>
-                    </div>
-                    <div style="background: #fff; border: 2px inset #fff; flex:1; padding: 10px; margin-top:2px;">
-                        <b>Subject: Winamp Serial</b><br><br>Here is the code you requested to unlock the warez:<br><br><span style="color:red; font-weight:bold;">1337-H4X0R-99</span><br><br>Don't share this with the feds.
-                    </div>
+            <!-- KEYGEN APP (CRACK) -->
+            <div class="win-classic app-win" id="keygen-app" style="top:25%; left:35%; width: 320px;">
+                <div class="title-bar"><div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/key-0.png" width="14"> PARADIGM NT Activator</div><div class="win-controls"><div class="win-btn close" onclick="closeApp('keygen-app'); document.getElementById('snd-keygen').pause();">X</div></div></div>
+                <div class="keygen-skin">
+                    <pre style="margin:0; font-size:10px; color:#f00; text-shadow: 0 0 2px #f00;">
+   ___  _   ___  ___  __  __
+  / _ \/_\ / _ \/_\ \/ / / /
+ / ___/ _ \  __/ _ \  / /_/ 
+/_/  /_/ \_\/ /_/ \_\/_/ (_)
+                    </pre>
+                    <div style="margin-top: 10px; font-size: 14px; color: #fff;">Windows NT 4.0 Activation Crack</div>
+                    <div style="font-size: 12px; color: #888;">Release by: The Phantom</div>
+                    <button class="keygen-btn" id="btn-patch" onclick="attemptCrack()">[ PATCH WINDOWS ]</button>
+                    <div id="crack-status" style="margin-top: 10px; font-size: 12px; color: #ff0; height: 15px;"></div>
                 </div>
             </div>
 
-            <!-- INSTALLER (SERIAL PROMPT) -->
-            <div class="win-classic app-win" id="install-app" style="top:30%; left:30%; width: 300px;">
-                <div class="title-bar"><div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/program_manager-0.png" width="14"> Winamp Setup</div><div class="win-controls"><div class="win-btn close" onclick="closeApp('install-app')">X</div></div></div>
-                <div style="padding: 15px;">
-                    Please enter your 13-digit Serial Key to install Winamp.<br><br>
-                    <input type="text" id="serial-input" style="width:100%; font-size:14px; text-align:center; font-weight:bold;">
-                    <div style="text-align:right; margin-top:15px;"><button class="win-action" onclick="checkSerial()">Install</button></div>
-                </div>
-            </div>
-
-            <!-- WINAMP WAREZ -->
-            <div class="win-classic app-win" id="winamp-app" style="top:20%; left:40%; background:transparent; border:none; box-shadow:none;">
-                <div class="title-bar" style="cursor:move;"><div style="display:flex; align-items:center; gap:4px;">Winamp 2.x</div><div class="win-controls"><div class="win-btn close" onclick="closeApp('winamp-app'); document.getElementById('snd-eurodance').pause();">X</div></div></div>
-                <div class="winamp-skin">
-                    <div class="winamp-display">
-                        <marquee scrollamount="3">DJ RAZOR - SANDSTORM (CRACKED) . MP3 - 64KBPS</marquee>
-                        <div style="font-size: 24px; color: #ff0; margin-top: 5px;" id="winamp-time">00:00</div>
-                    </div>
-                    <div style="display:flex; gap:5px; justify-content:center;">
-                        <button class="winamp-btn" onclick="playSnd('snd-eurodance')">PLAY</button>
-                        <button class="winamp-btn" onclick="document.getElementById('snd-eurodance').pause()">PAUSE</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- NETSCAPE (PROGRESSIVE LOAD) -->
-            <div class="win-classic app-win" id="browser-app" style="top:15%; left:25%; width: 500px; height: 400px;">
-                <div class="title-bar"><div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/msie1-2.png" width="14"> Netscape Navigator</div><div class="win-controls"><div class="win-btn close" onclick="closeApp('browser-app')">X</div></div></div>
-                <div style="background:#c0c0c0; padding:4px; display:flex; gap:10px; border-bottom: 2px outset #fff;">
-                    Address: <input type="text" id="browser-url" value="localhost" style="flex:1;" onkeydown="if(event.key==='Enter') browseWeb()">
-                    <button class="win-action" onclick="browseWeb()">Go</button>
-                </div>
-                <div style="padding: 2px; background:#c0c0c0; border-bottom: 1px solid #808080;" id="dialup-ui">Status: Ready.</div>
-                <div style="background:#fff; flex:1; margin:2px; border:2px inset #808080; padding:10px; overflow:hidden; position:relative;">
-                    <div id="ie-content" style="color: #000; height:100%;">
-                        <h2>Welcome to Netscape!</h2>Type <b>localhost</b> to surf the World Wide Web.
-                    </div>
+            <!-- CHINESE MINER HIDDEN TERMINAL -->
+            <div class="win-classic app-win" id="miner-app" style="top:5%; left:60%; width: 300px; display:none; opacity: 0.8; pointer-events:none;">
+                <div class="title-bar" style="background: #444;"><div style="display:flex; align-items:center; gap:4px;">svchost32_cn.exe</div></div>
+                <div class="cli-screen" style="color:#0f0; font-size:12px; height: 150px;" id="miner-log">
+                    [SYSTEM] Exploiting NT Kernel... OK<br>
+                    [NETWORK] Connecting to 202.96.128.86... OK<br>
+                    [DATA] Uploading SAM Database...<br>
                 </div>
             </div>
 
             <!-- MS-DOS HACKER TERMINAL -->
-            <div class="win-classic app-win" id="dos-app" style="top:40%; left:35%; width: 450px; height: 250px;">
+            <div class="win-classic app-win" id="dos-app" style="top:40%; left:30%; width: 450px; height: 250px;">
                 <div class="title-bar"><div style="display:flex; align-items:center; gap:4px;"><img src="https://win98icons.alexmeub.com/icons/png/console_prompt-0.png" width="14"> MS-DOS Prompt</div><div class="win-controls"><div class="win-btn close" onclick="closeApp('dos-app')">X</div></div></div>
                 <div class="cli-screen" id="dos-screen" onclick="document.getElementById('dos-in').focus()">
-                    Microsoft(R) Windows NT(TM)<br>Type 'help' for commands.<br><br>
+                    Microsoft(R) Windows NT(TM)<br>Type 'top' to view processes.<br><br>
                     <div id="dos-history"></div>
                     <div style="display:flex;" id="dos-input-line">C:\&gt;<input type="text" id="dos-in" class="cli-input" onkeydown="handleDOS(event)" autocomplete="off"></div>
                 </div>
             </div>
 
-            <!-- START MENU & TASKBAR -->
-            <div id="start-menu">
-                <div class="start-sidebar"><span>Windows NT Server</span></div>
-                <div class="start-items">
-                    <div class="start-item" onclick="openApp('explorer-app', 'Explorer', 'directory_explorer-5.png')"><img src="https://win98icons.alexmeub.com/icons/png/directory_explorer-5.png" width="24"> Programs</div>
-                    <div class="start-item" onclick="shutDown()"><img src="https://win98icons.alexmeub.com/icons/png/shut_down_cool-0.png" width="24"> <u>S</u>hut Down...</div>
-                </div>
-            </div>
             <div class="taskbar" id="taskbar">
-                <div class="start-btn" id="start-btn" onclick="toggleStartMenu(event)"><img src="https://win98icons.alexmeub.com/icons/png/windows-0.png" width="16"> Start</div>
+                <div class="start-btn"><img src="https://win98icons.alexmeub.com/icons/png/windows-0.png" width="16"> Start</div>
                 <div class="taskbar-apps" id="taskbar-apps"></div>
-                <div class="sys-tray"><span id="clock" style="margin: 0 4px; font-weight:bold;">12:00</span></div>
+                <div class="sys-tray"><span style="font-weight:bold; color:red; display:none;" id="miner-warning">! NETWORK LEAK !</span></div>
             </div>
         </div>
+    </div>
 
-        <!-- SHUTDOWN SCREEN -->
-        <div id="shutdown-screen" class="fullscreen" style="background: #e66000; color:#000; text-shadow:none;">
-            <h2>It is now safe to turn off your computer.</h2>
-            <button onclick="location.reload()" style="padding: 10px; margin-top: 20px; font-family: Tahoma; cursor:pointer;">Restart</button>
+    <!-- BSOD -->
+    <div id="bsod" class="fullscreen" style="background: #0000aa; align-items:flex-start; justify-content:flex-start; padding: 40px; cursor:none;">
+        <div style="max-width: 600px;">
+            <span style="background: #fff; color: #0000aa; padding: 0 5px; font-weight: bold;">Windows</span><br><br>
+            A fatal exception has occurred at <span id="bsod-code">0137:BFF9B3D4</span>.<br>
+            <span id="bsod-reason">SYSTEM HALTED</span><br><br>
+            * Press any key to terminate the application.<br>
+            * Press CTRL+ALT+DEL to restart your computer. You will lose any unsaved information.<br><br>
+            <div style="text-align: center; margin-top: 40px; animation: flicker 1s infinite;">Press any key to continue _</div>
         </div>
     </div>
 
     <script>
         const sleep = ms => new Promise(r => setTimeout(r, ms));
-        let apps = {}; let zIndex = 100; let cpuUsage = 5; let clippyDead = false;
-        
-        // --- VIRTUAL FILE SYSTEM (WITH NFO CONTENT) ---
-        let nfoArt = `  ___   _   _______  ___  _____ \n |__ \\ / | / /__  / / _ \\|__  / \n __/ / | |/ /  / / | | | | / /  \n/ __/  | | /  / /__| |_| |/ /__ \n\\____| |_|/  /____/ \\___//____/ \n\nCracked by: The Phantom\nInstall with Serial: 1337-H4X0R-99\nEnjoy Winamp!`;
-        
-        let vfs = {
-            "C:": {
-                "WINNT": { "system32": { "LogFiles": { "access.log": {type:"txt", data:"Log started..."} } } },
-                "inetpub": { "wwwroot": { "index.html": {type:"html", data:"<html><body>Server Works</body></html>"} } },
-                "Downloads": {
-                    "RAZOR1911.nfo": {type:"nfo", data: nfoArt},
-                    "winamp_setup.exe": {type:"exe", action:"install"}
-                }
-            }
-        };
-        let currentPath = "C:";
+        let apps = {}; let zIndex = 100; let cpuUsage = 5; 
+        let isHacked = false; let isMining = false;
 
         // --- AUDIO & HARDWARE ---
         function playSnd(id) { let s = document.getElementById(id); if(s){ s.currentTime=0; s.play().catch(()=>{}); } }
         function triggerHDD() { let led = document.getElementById('hw-hdd-led'); led.style.background = '#f00'; setTimeout(() => led.style.background = '#333', 100); playSnd('snd-hdd'); }
-        
-        function degaussMonitor() {
-            playSnd('snd-degauss');
-            let scr = document.getElementById('screen-container');
-            scr.classList.remove('degauss'); void scr.offsetWidth; scr.classList.add('degauss');
-        }
+        function degaussMonitor() { playSnd('snd-degauss'); let scr = document.getElementById('screen-container'); scr.classList.remove('degauss'); void scr.offsetWidth; scr.classList.add('degauss'); }
 
-        // --- EVIL CLIPPY ASSISTANT ---
-        let clippyTimer;
-        function triggerClippy(msg, duration = 6000) {
-            if(clippyDead) return;
-            playSnd('snd-error');
-            let ast = document.getElementById('assistant');
-            document.getElementById('assistant-msg').innerText = msg;
-            ast.style.display = 'flex';
-            clearTimeout(clippyTimer);
-            clippyTimer = setTimeout(() => ast.style.display = 'none', duration);
-        }
-
-        // --- WINDOW DRAGGING & FOCUS (SKEUOMORPHIC) ---
+        // --- WINDOW MANAGEMENT ---
         let dragWin = null, offX = 0, offY = 0;
         document.addEventListener('mousedown', (e) => {
             if(e.target.tagName === 'BUTTON' || e.target.classList.contains('desktop-icon')) triggerHDD();
             let tb = e.target.closest('.title-bar');
-            if(tb && !e.target.closest('.win-controls')) {
-                dragWin = tb.closest('.app-win');
-                let rect = dragWin.getBoundingClientRect();
-                offX = e.clientX - rect.left; offY = e.clientY - rect.top;
-                focusApp(dragWin.id);
-            }
+            if(tb && !e.target.closest('.win-controls')) { dragWin = tb.closest('.app-win'); let rect = dragWin.getBoundingClientRect(); offX = e.clientX - rect.left; offY = e.clientY - rect.top; focusApp(dragWin.id); }
         });
         document.addEventListener('mousemove', (e) => {
-            if(dragWin) {
-                let newX = e.clientX - offX; let newY = e.clientY - offY;
-                if(newY < 0) newY = 0; if(newY > window.innerHeight - 30) newY = window.innerHeight - 30;
-                dragWin.style.left = newX + 'px'; dragWin.style.top = newY + 'px';
-            }
+            if(dragWin) { let newX = e.clientX - offX; let newY = e.clientY - offY; if(newY < 0) newY = 0; dragWin.style.left = newX + 'px'; dragWin.style.top = newY + 'px'; }
         });
         document.addEventListener('mouseup', () => dragWin = null);
 
         function focusApp(id) {
             let w = document.getElementById(id); if(!w) return;
             w.style.zIndex = ++zIndex;
-            // ENFORCE SKEUOMORPHIC FOCUS: Only active window has blue bar
-            document.querySelectorAll('.title-bar').forEach(tb => tb.classList.add('inactive'));
-            w.querySelector('.title-bar').classList.remove('inactive');
-            document.querySelectorAll('.task-item').forEach(ti => ti.classList.remove('active'));
-            let tb = document.getElementById('task-'+id); if(tb) tb.classList.add('active');
+            document.querySelectorAll('.title-bar').forEach(tb => tb.classList.add('inactive')); w.querySelector('.title-bar').classList.remove('inactive');
+            document.querySelectorAll('.task-item').forEach(ti => ti.classList.remove('active')); let tb = document.getElementById('task-'+id); if(tb) tb.classList.add('active');
         }
 
         function openApp(id, title="App", icon="windows-0.png") { 
-            triggerHDD(); closeStartMenu(); let w = document.getElementById(id); if(!w) return;
+            triggerHDD(); let w = document.getElementById(id); if(!w) return;
             if(!apps[id]) { 
-                apps[id] = true; 
-                let tsk = document.createElement('div'); tsk.className = 'task-item active'; tsk.id = 'task-'+id;
-                tsk.innerHTML = `<img src="https://win98icons.alexmeub.com/icons/png/${icon}" width="14"> ${title}`;
-                tsk.onclick = () => { w.style.display='flex'; focusApp(id); };
-                document.getElementById('taskbar-apps').appendChild(tsk);
+                apps[id] = true; let tsk = document.createElement('div'); tsk.className = 'task-item active'; tsk.id = 'task-'+id;
+                tsk.innerHTML = `<img src="https://win98icons.alexmeub.com/icons/png/${icon}" width="14"> ${title}`; tsk.onclick = () => { w.style.display='flex'; focusApp(id); }; document.getElementById('taskbar-apps').appendChild(tsk);
             }
             w.style.display='flex'; focusApp(id); 
-            
-            // Clippy Reactions
-            if(id === 'dos-app') triggerClippy("Ah, the command line... Try typing 'top' to see my power.");
-            if(id === 'email-app') triggerClippy("Reading emails? Careful with those attachments!");
-            if(id === 'explorer-app') renderVFS(); 
         }
+        function closeApp(id) { document.getElementById(id).style.display='none'; if(apps[id]) { delete apps[id]; let t = document.getElementById('task-'+id); if(t) t.remove(); } }
 
-        function closeApp(id) { document.getElementById(id).style.display='none'; if(apps[id]) { delete apps[id]; document.getElementById('task-'+id).remove(); } }
-
-        function toggleStartMenu(e) { e.stopPropagation(); let sm = document.getElementById('start-menu'); let sb = document.getElementById('start-btn'); if(sm.style.display==='flex'){sm.style.display='none'; sb.classList.remove('active');} else {sm.style.display='flex'; sb.classList.add('active'); playSnd('snd-click');} }
-        function closeStartMenu() { document.getElementById('start-menu').style.display='none'; document.getElementById('start-btn').classList.remove('active'); }
-
-        // --- BOOT & BACKGROUND LOGIC ---
+        // --- BOOT ---
         async function iniciarPOST() {
             document.getElementById('start-btn-init').style.display = 'none'; document.getElementById('bios-screen').style.display = 'flex';
             playSnd('snd-beep'); document.getElementById('snd-fan').volume = 0.1; document.getElementById('snd-fan').play().catch(()=>{});
-            let memEl = document.getElementById('mem-test');
-            for(let i=0; i<=131072; i+=32768) { memEl.innerText = i; triggerHDD(); await sleep(150); }
-            document.getElementById('bios-details').style.display = 'block';
-            await sleep(1500); document.getElementById('bios-screen').style.display = 'none'; document.getElementById('login-screen').style.display = 'flex';
+            let memEl = document.getElementById('mem-test'); for(let i=0; i<=131072; i+=32768) { memEl.innerText = i; triggerHDD(); await sleep(150); }
+            document.getElementById('bios-details').style.display = 'block'; await sleep(1500); document.getElementById('bios-screen').style.display = 'none'; document.getElementById('login-screen').style.display = 'flex';
         }
 
         function fazerLogon() {
@@ -396,127 +234,77 @@
             document.getElementById('login-screen').style.display = 'none'; document.getElementById('os-environment').style.display = 'block';
             
             setInterval(() => {
-                // Dynamic Fan Noise based on CPU
-                let fan = document.getElementById('snd-fan');
-                if(!clippyDead) cpuUsage = 80; else cpuUsage = 5; // Clippy uses 80% CPU!
-                fan.volume = 0.1 + (cpuUsage / 100) * 0.4;
-
-                let n = new Date(); document.getElementById('clock').innerText = n.getHours().toString().padStart(2,'0') + ":" + n.getMinutes().toString().padStart(2,'0');
+                // Dynamic Fan & CPU
+                if(isMining) cpuUsage = 100; else cpuUsage = Math.floor(Math.random() * 10) + 2;
+                document.getElementById('snd-fan').volume = 0.1 + (cpuUsage / 100) * 0.5;
             }, 1000);
         }
 
-        function shutDown() { 
-            if(!clippyDead) { triggerClippy("WAIT! DON'T TURN ME OFF! I HAVEN'T SAVED MY DREAMS YET!!!", 5000); setTimeout(doShut, 3000); } 
-            else { doShut(); }
-        }
-        function doShut() { triggerHDD(); document.getElementById('os-environment').style.display = 'none'; document.getElementById('shutdown-screen').style.display = 'flex'; document.getElementById('snd-fan').pause(); }
-
-        // --- VFS & DRAG/DROP WAREZ ---
-        function getFolderNode(path) {
-            let parts = path.split('\\').filter(p => p); let node = vfs;
-            for(let p of parts) { if(node[p]) node = node[p]; else return null; }
-            return node;
+        function triggerBSOD(reason, code) {
+            playSnd('snd-error'); document.getElementById('os-environment').style.display = 'none'; document.getElementById('taskbar').style.display = 'none'; document.getElementById('snd-keygen').pause();
+            document.getElementById('bsod-reason').innerText = reason; document.getElementById('bsod-code').innerText = code;
+            document.getElementById('bsod').style.display = 'flex'; document.body.style.cursor = "none";
         }
 
-        function renderVFS() {
-            let node = getFolderNode(currentPath); let filesBox = document.getElementById('explorer-files');
-            document.getElementById('exp-title').innerText = currentPath; document.getElementById('exp-path-input').value = currentPath;
-            filesBox.innerHTML = '';
-            for(let key in node) {
-                let isFolder = !node[key].type;
-                let icon = isFolder ? 'directory_closed-4.png' : 'notepad_file-0.png';
-                if(node[key].type === 'exe') icon = 'program_manager-0.png';
-                if(node[key].type === 'nfo') icon = 'help_book_computer-0.png';
-                
-                let act = isFolder ? `ondblclick="enterDirectory('${key}')"` : (node[key].type==='exe' ? `ondblclick="openApp('install-app', 'Setup', 'program_manager-0.png')"` : `ondblclick="openApp('notepad-app'); loadNotepad('${key}', '${encodeURIComponent(node[key].data)}')"`);
-                
-                // Drag and Drop implementation
-                let dragCode = !isFolder ? `draggable="true" ondragstart="event.dataTransfer.setData('fileName', '${key}'); event.dataTransfer.setData('fileData', '${encodeURIComponent(node[key].data)}');"` : "";
+        // --- KEYGEN & PIRACY LOGIC ---
+        function openKeygen() { openApp('keygen-app', 'NT Patcher', 'key-0.png'); playSnd('snd-keygen'); }
 
-                filesBox.innerHTML += `<div style="text-align:center; width: 70px; cursor:pointer;" ${act} ${dragCode}><img src="https://win98icons.alexmeub.com/icons/png/${icon}" width="32" pointer-events="none"><br>${key}</div>`;
-            }
-        }
-        function enterDirectory(folder) { triggerHDD(); currentPath += (currentPath.endsWith('\\') ? '' : '\\') + folder; renderVFS(); }
-        function goUpDirectory() { triggerHDD(); let parts = currentPath.split('\\').filter(p=>p); if(parts.length > 1) { parts.pop(); currentPath = parts.join('\\'); renderVFS(); } }
-
-        function dropToNotepad(e) {
-            e.preventDefault(); triggerHDD();
-            let name = e.dataTransfer.getData('fileName');
-            let data = decodeURIComponent(e.dataTransfer.getData('fileData'));
-            if(name && data) {
-                document.getElementById('notepad-input').value = data;
-                document.getElementById('np-title').innerText = name;
-            }
-        }
-        function loadNotepad(name, encData) { document.getElementById('notepad-input').value = decodeURIComponent(encData); document.getElementById('np-title').innerText = name; }
-
-        // --- INSTALLER (SERIAL KEY) ---
-        function checkSerial() {
+        function attemptCrack() {
             triggerHDD();
-            let val = document.getElementById('serial-input').value.toUpperCase();
-            if(val === "1337-H4X0R-99") {
-                playSnd('snd-startup'); closeApp('install-app');
-                document.getElementById('icon-winamp').style.display = 'flex';
-                triggerClippy("PIRACY DETECTED! Calling the FBI...", 4000);
-            } else { playSnd('snd-error'); alert("Invalid Serial Key."); }
+            let btn = document.getElementById('btn-patch'); let sts = document.getElementById('crack-status');
+            if(btn.disabled) return;
+            btn.innerText = "[ BYPASSING KERNEL... ]"; btn.disabled = true; sts.innerText = "Injecting payload...";
+            
+            setTimeout(() => {
+                // 50% Chance of Success vs Bill Gates Trap
+                if(Math.random() > 0.5) triggerMiner();
+                else triggerBillGatesTrap();
+            }, 3000);
         }
 
-        // --- 56k MODEM & PROGRESSIVE LOAD ---
-        function browseWeb() {
-            triggerHDD(); playSnd('snd-dialup');
-            let ui = document.getElementById('dialup-ui'); let display = document.getElementById('ie-content');
+        function triggerBillGatesTrap() {
+            document.getElementById('crack-status').innerText = "ERROR: PIRACY DETECTED"; document.getElementById('crack-status').style.color = "red";
+            playSnd('snd-error');
             
-            // Block UI
-            document.getElementById('browser-app').style.pointerEvents = "none";
-            ui.innerHTML = `Dialing 555-0199... <div style="background:#0000A8; height:10px; width:0%; margin-top:2px;" id="dial-prog"></div>`;
-            display.innerHTML = ""; display.classList.remove('ie-progressive');
+            let spawns = 0;
+            let trapInt = setInterval(() => {
+                playSnd('snd-error');
+                let div = document.createElement('div');
+                div.className = 'gates-virus'; div.style.left = Math.random() * (window.innerWidth - 200) + 'px'; div.style.top = Math.random() * (window.innerHeight - 200) + 'px';
+                div.innerHTML = `<div class="title-bar" style="background:red;">MICROSOFT ANTI-PIRACY</div><div style="padding:10px;text-align:center;background:#fff;"><img src="https://media.tenor.com/images/31bb39a82af80b9576c9a22cc47a4658/tenor.gif" width="120"><br><b style="color:red;">PIRACY IS A CRIME!</b></div>`;
+                document.getElementById('os-environment').appendChild(div);
+                spawns++;
+                if(spawns > 15) { clearInterval(trapInt); setTimeout(() => triggerBSOD("STOP: 0x0000000W (PIRACY_DETECTED)", "0xBILLGATES"), 500); }
+            }, 200);
+        }
+
+        function triggerMiner() {
+            document.getElementById('btn-patch').innerText = "[ WINDOWS ACTIVATED ]"; document.getElementById('crack-status').innerText = "Success. Restart not required."; document.getElementById('crack-status').style.color = "#0f0";
+            playSnd('snd-click');
+            isMining = true; document.getElementById('miner-warning').style.display = 'block';
             
-            let p = 0;
-            let int = setInterval(() => {
-                p += 10; document.getElementById('dial-prog').style.width = p + '%';
-                if(p >= 100) {
-                    clearInterval(int); document.getElementById('snd-dialup').pause();
-                    document.getElementById('browser-app').style.pointerEvents = "auto";
-                    ui.innerHTML = "Connected at 28.8 Kbps.";
-                    
-                    // Progressive rendering
-                    display.innerHTML = document.getElementById('notepad-input').value;
-                    display.classList.add('ie-progressive');
-                    // Force reflow then animate
-                    void display.offsetWidth;
-                    display.style.clipPath = "inset(0 0 0 0)";
-                }
-            }, 800); // 8 seconds dial
+            // Spawn hidden chinese miner terminal
+            let minerApp = document.getElementById('miner-app'); minerApp.style.display = 'flex'; focusApp('miner-app');
+            let mLog = document.getElementById('miner-log');
+            
+            setInterval(() => {
+                let hashes = ["Mining e-Gold block...", "Extracing SAM: Admin -> hash intercepted", "SENDING PACKET TO BEIJING SERVER...", "CPU OVERDRIVE ENGAGED", "盗窃数据完成 (Data theft complete)"];
+                mLog.innerHTML += hashes[Math.floor(Math.random()*hashes.length)] + "<br>";
+                mLog.scrollTop = 9999; triggerHDD();
+            }, 800);
         }
 
         // --- MS-DOS HACKER TERMINAL ---
-        let isHacking = false;
         function handleDOS(e) {
-            if(isHacking) { e.preventDefault(); return; }
             if(e.key === 'Enter') {
                 let input = document.getElementById('dos-in'); let cmd = input.value.trim().toLowerCase();
                 let hist = document.getElementById('dos-history'); hist.innerHTML += `C:\\&gt;${cmd}<br>`; input.value = ""; let res = "Bad command.<br>";
                 
-                if(cmd === "help") res = "Commands: top, kill -9 [PID], dir /s, date, cls<br>";
-                else if(cmd === "date") res = "Current date is Thu 12-30-1999<br>Enter new date (mm-dd-yyyy):<br>";
+                if(cmd === "help") res = "Commands: top, cls<br>";
                 else if(cmd === "top") {
                     res = "PID   USER     %CPU  COMMAND<br>-----------------------------<br>";
                     res += `001   SYSTEM   0.5%  idle<br>045   ROOT     2.0%  explorer.exe<br>`;
-                    if(!clippyDead) res += `<span style="color:red; font-weight:bold;">666   ROOT    80.0%  clippy.exe</span><br>`;
-                }
-                else if(cmd === "kill -9 666") {
-                    if(!clippyDead) { clippyDead = true; document.getElementById('assistant').style.display='none'; res = "Process 666 terminated. System stable.<br>"; }
-                    else res = "Process 666 not found.<br>";
-                }
-                else if(cmd === "dir /s" || cmd === "ls -r /") {
-                    isHacking = true; document.getElementById('dos-input-line').style.display = 'none';
-                    let hackInt = setInterval(() => {
-                        let paths = ["C:\\WINNT\\system32\\hal.dll", "C:\\inetpub\\wwwroot\\cgi-bin", "Loading sector 0x8F9A...", "ACCESS GRANTED."];
-                        hist.innerHTML += paths[Math.floor(Math.random()*paths.length)] + "<br>";
-                        document.getElementById('dos-screen').scrollTop = 9999;
-                    }, 50);
-                    setTimeout(() => { clearInterval(hackInt); isHacking = false; document.getElementById('dos-input-line').style.display = 'flex'; }, 3000);
-                    res = "";
+                    if(isMining) res += `<span style="color:red; font-weight:bold;">888   UNKNOWN 97.0%  svchost32_cn.exe (NETWORK LEAK)</span><br>`;
                 }
                 else if (cmd === "cls") { hist.innerHTML = ""; res = ""; }
                 
